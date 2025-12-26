@@ -1,9 +1,9 @@
-name = "goxprint"
-compatibility_date = "2024-01-01"
-compatibility_flags = ["nodejs_compat"]
+name = 'goxprint-2'
+compatibility_date = '2024-01-01'
+compatibility_flags = ['nodejs_compat']
 
 [env.production]
-name = "goxprint-prod"
+name = 'goxprint-2-prod'
 
 [env.development]
-name = "goxprint-dev"
+name = 'goxprint-2-dev'

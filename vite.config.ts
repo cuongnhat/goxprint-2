@@ -8,7 +8,20 @@ export default defineConfig(({ mode }) => {
         port: 3000,
         host: '0.0.0.0',
       },
-      plugins: [react()],
+      plugins: [
+        react(),
+        {
+          name: 'copy-worker',
+          writeBundle() {
+            const fs = require('fs');
+            const path = require('path');
+            fs.copyFileSync(
+              path.resolve(__dirname, '_worker.js'),
+              path.resolve(__dirname, 'dist/_worker.js')
+            );
+          }
+        }
+      ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)

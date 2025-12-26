@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>GoXPrint App</title>
+    <title>GoXPrint App - TEST</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     <script>
@@ -49,9 +49,15 @@
       @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
       @keyframes slideLeft { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
-</head>
+  </head>
   <body>
-    <div id="root"></div>
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <h1 class="text-4xl font-bold text-blue-500 mb-4">GoXPrint App</h1>
+        <p class="text-xl">Ứng dụng đang hoạt động!</p>
+        <p class="text-sm text-gray-400 mt-2">Nếu bạn thấy trang này thì deploy đã thành công</p>
+      </div>
+    </div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

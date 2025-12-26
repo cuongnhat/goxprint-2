@@ -1,16 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-type DivisionOption = {
-  id: string;
-  w: number;
-  h: number;
-  area: number;
-  label: string;
-  totalYield: number;
-  wastes: any[];
-  blocks?: any[];
-};
-
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import GoXPrintLogo from './components/GoXPrintLogo';
 import { 
   Scissors,
@@ -59,14 +47,14 @@ const PaperCalculator: React.FC = () => {
   const [targetQuantity, setTargetQuantity] = useState(11);
   const [minSize, setMinSize] = useState({ w: 200, h: 200 });
   const [maxSize, setMaxSize] = useState({ w: 330, h: 0 });
-  const [selectedGrid, setSelectedGrid] = useState<DivisionOption | null>(null);
+  const [selectedGrid, setSelectedGrid] = useState<any>(null);
   
   // Pagination State
   const [visibleCount, setVisibleCount] = useState(3);
 
   // --- Results ---
   const [optimizationResult, setOptimizationResult] = useState<any>(null);
-  const [divisionOptions, setDivisionOptions] = useState<DivisionOption[]>([]);
+  const [divisionOptions, setDivisionOptions] = useState<any[]>([]);
   
   // --- Loading States ---
   const [isCalculating, setIsCalculating] = useState(false);
@@ -222,15 +210,7 @@ const PaperCalculator: React.FC = () => {
         const endH = Number(maxSize.h) > 0 ? Math.min(Number(maxSize.h), P_H) : P_H;
 
         const step = 0.5;
-        let foundOptions: {
-            id: string;
-            w: number;
-            h: number;
-            area: number;
-            label: string;
-            totalYield: number;
-            wastes: any[];
-        }[] = [];
+        let foundOptions = [];
 
         for (let w = startW; w <= endW; w += step) {
             let low = startH;
@@ -380,14 +360,8 @@ const PaperCalculator: React.FC = () => {
             <Maximize className="w-4 h-4" /> Khổ Giấy Lớn (mm)
           </div>
           <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Chiều Dài</label>
-              <input type="number" value={paper.w} onChange={(e) => setPaper({...paper, w: Number(e.target.value)})} className="w-full text-lg font-medium p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none transition" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Chiều Rộng</label>
-              <input type="number" value={paper.h} onChange={(e) => setPaper({...paper, h: Number(e.target.value)})} className="w-full text-lg font-medium p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none transition" />
-            </div>
+            <NumberInput label="Chiều Dài" value={paper.w} onChange={(v: number | null) => setPaper({...paper, w: v || 0})} suffix="mm" />
+            <NumberInput label="Chiều Rộng" value={paper.h} onChange={(v: number | null) => setPaper({...paper, h: v || 0})} suffix="mm" />
           </div>
           
           <div className="pt-3 border-t border-gray-100">
@@ -395,12 +369,12 @@ const PaperCalculator: React.FC = () => {
                 <label className="block text-xs text-gray-500 mb-1 flex items-center gap-1">
                     <DollarSign className="w-3 h-3" /> Giá giấy lớn (VNĐ)
                 </label>
-                <input 
-                    type="number" 
-                    value={paperPrice || ''} 
-                    onChange={(e) => setPaperPrice(Number(e.target.value))}
+                <NumberInput
+                    value={paperPrice}
+                    onChange={(v: number | null) => setPaperPrice(v || 0)}
                     placeholder="VD: 5000"
-                    className="w-full text-lg font-medium p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none transition text-emerald-600" 
+                    suffix="đ"
+                    className="text-emerald-600"
                 />
              </div>
           </div>
@@ -423,8 +397,8 @@ const PaperCalculator: React.FC = () => {
                    <button onClick={() => setItem({ w: item.h, h: item.w })} className="text-xs flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100"><RotateCcw className="w-3 h-3" /> Đổi chiều</button>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                    <div><label className="block text-xs text-gray-500 mb-1">Dài</label><input type="number" value={item.w} onChange={(e) => setItem({...item, w: Number(e.target.value)})} className="w-full text-lg font-medium p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                    <div><label className="block text-xs text-gray-500 mb-1">Rộng</label><input type="number" value={item.h} onChange={(e) => setItem({...item, h: Number(e.target.value)})} className="w-full text-lg font-medium p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+                    <NumberInput label="Dài" value={item.w} onChange={(v: number | null) => setItem({...item, w: v || 0})} suffix="mm" />
+                    <NumberInput label="Rộng" value={item.h} onChange={(v: number | null) => setItem({...item, h: v || 0})} suffix="mm" />
                 </div>
             </div>
 
@@ -466,7 +440,11 @@ const PaperCalculator: React.FC = () => {
                      <List className="w-4 h-4" /> Số lượng & Bộ lọc
                 </div>
                 <div className="relative mb-4">
-                    <input type="number" value={targetQuantity} onChange={(e) => setTargetQuantity(Math.max(1, parseInt(e.target.value) || 0))} className="w-full text-3xl font-bold p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-center text-blue-600" />
+                    <NumberInput
+                        value={targetQuantity}
+                        onChange={(v: number | null) => setTargetQuantity(Math.max(1, v || 0))}
+                        className="text-3xl font-bold text-center text-blue-600"
+                    />
                     <div className="text-center text-xs text-gray-400 mt-2">Tìm kích thước lớn nhất cho số lượng này</div>
                 </div>
                 
@@ -475,22 +453,10 @@ const PaperCalculator: React.FC = () => {
                         <Filter className="w-3 h-3" /> Bộ lọc kích thước (Min - Max):
                     </div>
                     <div className="grid grid-cols-4 gap-2">
-                         <div className="relative">
-                             <label className="block text-[10px] text-gray-400 mb-1 text-center">Min Dài</label>
-                            <input type="number" placeholder="Min W" value={minSize.w || ''} onChange={(e) => setMinSize({...minSize, w: Number(e.target.value)})} className="w-full text-sm p-2 border rounded-md bg-gray-50 outline-none text-center" />
-                         </div>
-                         <div className="relative">
-                             <label className="block text-[10px] text-gray-400 mb-1 text-center">Max Dài</label>
-                            <input type="number" placeholder="Max W" value={maxSize.w || ''} onChange={(e) => setMaxSize({...maxSize, w: Number(e.target.value)})} className="w-full text-sm p-2 border rounded-md bg-gray-50 outline-none text-center" />
-                         </div>
-                         <div className="relative">
-                             <label className="block text-[10px] text-gray-400 mb-1 text-center">Min Rộng</label>
-                            <input type="number" placeholder="Min H" value={minSize.h || ''} onChange={(e) => setMinSize({...minSize, h: Number(e.target.value)})} className="w-full text-sm p-2 border rounded-md bg-gray-50 outline-none text-center" />
-                         </div>
-                         <div className="relative">
-                             <label className="block text-[10px] text-gray-400 mb-1 text-center">Max Rộng</label>
-                            <input type="number" placeholder="Max H" value={maxSize.h || ''} onChange={(e) => setMaxSize({...maxSize, h: Number(e.target.value)})} className="w-full text-sm p-2 border rounded-md bg-gray-50 outline-none text-center" />
-                         </div>
+                         <NumberInput label="Min Dài" value={minSize.w} onChange={(v: number | null) => setMinSize({...minSize, w: v || 0})} placeholder="Min W" className="text-sm text-center" />
+                         <NumberInput label="Max Dài" value={maxSize.w} onChange={(v: number | null) => setMaxSize({...maxSize, w: v || 0})} placeholder="Max W" className="text-sm text-center" />
+                         <NumberInput label="Min Rộng" value={minSize.h} onChange={(v: number | null) => setMinSize({...minSize, h: v || 0})} placeholder="Min H" className="text-sm text-center" />
+                         <NumberInput label="Max Rộng" value={maxSize.h} onChange={(v: number | null) => setMaxSize({...maxSize, h: v || 0})} placeholder="Max H" className="text-sm text-center" />
                     </div>
                 </div>
             </div>
@@ -567,7 +533,7 @@ const PaperCalculator: React.FC = () => {
                 <div className="flex gap-3 text-xs">
                      {activeTab === 'optimize' ? (
                         <>
-                             {optimizationResult?.blocks.length > 1 && (
+                             {optimizationResult?.blocks && optimizationResult.blocks.length > 1 && (
                                 <>
                                     <div className="flex items-center gap-1"><div className="w-3 h-3 bg-blue-500 rounded-sm"></div> Cụm 1</div>
                                     <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> Cụm 2</div>
@@ -598,16 +564,38 @@ const PaperCalculator: React.FC = () => {
 
 // Input số tối ưu cho mobile
 const NumberInput = ({ value, onChange, className, placeholder, suffix, label, ...props }: any) => {
+  const [localValue, setLocalValue] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/\./g, '').replace(/,/g, '.');
-    if (rawValue === '') { onChange(0); return; }
+    const inputValue = e.target.value;
+    setLocalValue(inputValue);
+    setIsEditing(true);
+    
+    const rawValue = inputValue.replace(/\./g, '').replace(/,/g, '.');
+    if (rawValue === '') { 
+      onChange(null);
+      return; 
+    }
     const numberValue = parseFloat(rawValue);
     if (!isNaN(numberValue)) onChange(numberValue);
   };
 
-  const displayValue = value !== undefined && value !== null 
-    ? value.toLocaleString('vi-VN', { maximumFractionDigits: 10 }) 
-    : '';
+  const handleBlur = () => {
+    setIsEditing(false);
+    // Reset local value when input is empty
+    if (localValue === '') {
+      setLocalValue('');
+      onChange(null);
+    }
+  };
+
+  // Use local value when editing, otherwise use formatted value
+  const displayValue = isEditing ? localValue : (
+    value !== undefined && value !== null && value !== 0
+      ? value.toLocaleString('vi-VN', { maximumFractionDigits: 10 }) 
+      : ''
+  );
 
   return (
     <div className="relative w-full group">
@@ -618,6 +606,7 @@ const NumberInput = ({ value, onChange, className, placeholder, suffix, label, .
           inputMode="decimal"
           value={displayValue}
           onChange={handleChange}
+          onBlur={handleBlur}
           className={`w-full p-3 pl-4 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none font-semibold text-gray-800 ${className}`}
           placeholder={placeholder}
           {...props}
@@ -629,6 +618,19 @@ const NumberInput = ({ value, onChange, className, placeholder, suffix, label, .
         )}
       </div>
     </div>
+  );
+};
+
+// Loading spinner component
+const LoadingSpinner = ({ size = 'md', className }: { size?: 'sm' | 'md' | 'lg', className?: string }) => {
+  const sizeClasses = {
+    sm: 'w-4 h-4',
+    md: 'w-6 h-6', 
+    lg: 'w-8 h-8'
+  };
+  
+  return (
+    <div className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-gray-300 border-t-blue-600 ${className}`}></div>
   );
 };
 
@@ -993,6 +995,35 @@ const MaterialCalculator: React.FC = () => {
                 )}
             </section>
         
+            {/* Footer Summary - now above preview */}
+            {activeResult && !activeResult.error && (
+                <div className="sticky bottom-0 left-0 right-0 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-lg z-40">
+                    <div className="grid grid-cols-3 gap-4 items-center">
+                        <div>
+                            <div className="text-[10px] text-gray-400 font-semibold uppercase">Vật tư</div>
+                            <div className="text-base font-bold text-gray-900">
+                                {activeResult.totalMaterial.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}
+                                <span className="text-xs font-normal text-gray-500 ml-1">{mode === 'sheet' ? 'tờ' : 'm'}</span>
+                            </div>
+                        </div>
+                        <div className="text-center border-l border-r border-gray-100">
+                            <div className="text-[10px] text-gray-400 font-semibold uppercase">Đơn giá</div>
+                            <div className="text-base font-bold text-emerald-600">
+                                {Math.round(activeResult.costPerItem).toLocaleString('vi-VN')}
+                                <span className="text-[10px] text-gray-400 ml-0.5">đ</span>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-[10px] text-gray-400 font-semibold uppercase">Tổng tiền</div>
+                            <div className="text-base font-bold text-blue-600">
+                                {Math.round(activeResult.totalCost).toLocaleString('vi-VN')}
+                                <span className="text-[10px] text-gray-400 ml-0.5">đ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 5. Compare Results & Preview */}
             {activeResult && !activeResult.error && (
                 <section className="pt-2">
@@ -1072,34 +1103,7 @@ const MaterialCalculator: React.FC = () => {
         </div>
       </div>
 
-      {/* 6. Sticky Footer */}
-      {activeResult && !activeResult.error && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40 px-4 py-2 safe-area-pb">
-              <div className="max-w-md mx-auto grid grid-cols-3 gap-4 items-center">
-                   <div>
-                        <div className="text-[10px] text-gray-400 font-semibold uppercase">Vật tư</div>
-                        <div className="text-base font-bold text-gray-900">
-                            {activeResult.totalMaterial.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}
-                            <span className="text-xs font-normal text-gray-500 ml-1">{mode === 'sheet' ? 'tờ' : 'm'}</span>
-                        </div>
-                   </div>
-                   <div className="text-center border-l border-r border-gray-100">
-                         <div className="text-[10px] text-gray-400 font-semibold uppercase">Đơn giá</div>
-                         <div className="text-base font-bold text-emerald-600">
-                             {Math.round(activeResult.costPerItem).toLocaleString('vi-VN')}
-                             <span className="text-[10px] text-gray-400 ml-0.5">đ</span>
-                        </div>
-                   </div>
-                   <div className="text-right">
-                        <div className="text-[10px] text-gray-400 font-semibold uppercase">Tổng tiền</div>
-                        <div className="text-base font-bold text-blue-600">
-                            {Math.round(activeResult.totalCost).toLocaleString('vi-VN')}
-                            <span className="text-[10px] text-gray-400 ml-0.5">đ</span>
-                        </div>
-                   </div>
-              </div>
-          </div>
-      )}
+      {/* Removed fixed footer - now moved above preview */}
     </div>
   );
 };

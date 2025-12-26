@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>GoXPrint</title>
+    <title>GoXPrint App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     <script>
@@ -38,6 +38,16 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
+      
+      /* Animation Utilities fix for CDN */
+      .animate-in { animation: fadeIn 0.5s ease-out forwards; }
+      .fade-in { opacity: 0; }
+      .slide-in-from-bottom-4 { animation: slideUp 0.5s ease-out forwards; }
+      .slide-in-from-right-8 { animation: slideLeft 0.5s ease-out forwards; }
+      
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      @keyframes slideLeft { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 <script type="importmap">
 {

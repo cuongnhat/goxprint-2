@@ -1,4 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+type DivisionOption = {
+  id: string;
+  w: number;
+  h: number;
+  area: number;
+  label: string;
+  totalYield: number;
+  wastes: any[];
+  blocks?: any[];
+};
+
 import GoXPrintLogo from './components/GoXPrintLogo';
 import { 
   Scissors,
@@ -33,7 +45,7 @@ import {
 // PAPER CALCULATOR COMPONENT
 // ==========================================
 const PaperCalculator: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('divide'); 
+  const [activeTab, setActiveTab] = useState('optimize'); 
   const [showPreview, setShowPreview] = useState(true);
 
   // --- Global Inputs ---
@@ -47,14 +59,17 @@ const PaperCalculator: React.FC = () => {
   const [targetQuantity, setTargetQuantity] = useState(11);
   const [minSize, setMinSize] = useState({ w: 200, h: 200 });
   const [maxSize, setMaxSize] = useState({ w: 330, h: 0 });
-  const [selectedGrid, setSelectedGrid] = useState<any>(null);
+  const [selectedGrid, setSelectedGrid] = useState<DivisionOption | null>(null);
   
   // Pagination State
   const [visibleCount, setVisibleCount] = useState(3);
 
   // --- Results ---
   const [optimizationResult, setOptimizationResult] = useState<any>(null);
-  const [divisionOptions, setDivisionOptions] = useState<any[]>([]);
+  const [divisionOptions, setDivisionOptions] = useState<DivisionOption[]>([]);
+  
+  // --- Loading States ---
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -160,92 +175,116 @@ const PaperCalculator: React.FC = () => {
   // LOGIC 1: OPTIMIZE
   // ==========================================
   const calculateOptimization = () => {
-    const P_W = Number(paper.w);
-    const P_H = Number(paper.h);
-    const I_W = Number(item.w);
-    const I_H = Number(item.h);
+    setIsCalculating(true);
+    
+    setTimeout(() => {
+      const P_W = Number(paper.w);
+      const P_H = Number(paper.h);
+      const I_W = Number(item.w);
+      const I_H = Number(item.h);
 
-    if (P_W <= 0 || P_H <= 0 || !I_W || !I_H) return;
+      if (P_W <= 0 || P_H <= 0 || !I_W || !I_H) {
+        setIsCalculating(false);
+        return;
+      }
 
-    const result = getBestYield(P_W, P_H, I_W, I_H);
-    if (result.total === 0) {
-        setOptimizationResult({ error: "Kích thước sản phẩm quá lớn!" });
-    } else {
-        setOptimizationResult(result);
-    }
+      const result = getBestYield(P_W, P_H, I_W, I_H);
+      if (result.total === 0) {
+          setOptimizationResult({ error: "Kích thước sản phẩm quá lớn!" });
+      } else {
+          setOptimizationResult(result);
+      }
+      setIsCalculating(false);
+    }, 100);
   };
 
   // ==========================================
   // LOGIC 2: DIVIDE
   // ==========================================
   const calculateDivisionOptions = () => {
-      const P_W = Number(paper.w);
-      const P_H = Number(paper.h);
-      const Qty = parseInt(String(targetQuantity));
+      setIsCalculating(true);
       
-      if (P_W <= 0 || P_H <= 0 || !Qty || Qty <= 0) {
-          setDivisionOptions([]); return;
-      }
+      setTimeout(() => {
+        const P_W = Number(paper.w);
+        const P_H = Number(paper.h);
+        const Qty = parseInt(String(targetQuantity));
+        
+        if (P_W <= 0 || P_H <= 0 || !Qty || Qty <= 0) {
+            setDivisionOptions([]);
+            setIsCalculating(false);
+            return;
+        }
 
-      const startW = Math.max(1, Number(minSize.w) || 1);
-      const endW = Number(maxSize.w) > 0 ? Math.min(Number(maxSize.w), P_W) : P_W;
-      
-      const startH = Math.max(1, Number(minSize.h) || 1);
-      const endH = Number(maxSize.h) > 0 ? Math.min(Number(maxSize.h), P_H) : P_H;
+        const startW = Math.max(1, Number(minSize.w) || 1);
+        const endW = Number(maxSize.w) > 0 ? Math.min(Number(maxSize.w), P_W) : P_W;
+        
+        const startH = Math.max(1, Number(minSize.h) || 1);
+        const endH = Number(maxSize.h) > 0 ? Math.min(Number(maxSize.h), P_H) : P_H;
 
-      const step = 0.5;
-      let foundOptions = [];
+        const step = 0.5;
+        let foundOptions: {
+            id: string;
+            w: number;
+            h: number;
+            area: number;
+            label: string;
+            totalYield: number;
+            wastes: any[];
+        }[] = [];
 
-      for (let w = startW; w <= endW; w += step) {
-          let low = startH;
-          let high = endH;
-          let bestHForThisW = -1;
-          let bestResult = null;
+        for (let w = startW; w <= endW; w += step) {
+            let low = startH;
+            let high = endH;
+            let bestHForThisW = -1;
+            let bestResult = null;
 
-          while (low <= high) {
-              const mid = Math.floor(((low + high) / 2) / step) * step;
-              if (mid < startH) break;
+            while (low <= high) {
+                const mid = Math.floor(((low + high) / 2) / step) * step;
+                if (mid < startH) break;
 
-              const result = getBestYield(P_W, P_H, w, mid);
-              
-              if (result.total >= Qty) {
-                  bestHForThisW = mid;
-                  bestResult = result;
-                  low = mid + step; 
-              } else {
-                  high = mid - step; 
-              }
-          }
+                const result = getBestYield(P_W, P_H, w, mid);
+                
+                if (result.total >= Qty) {
+                    bestHForThisW = mid;
+                    bestResult = result;
+                    low = mid + step; 
+                } else {
+                    high = mid - step; 
+                }
+            }
 
-          if (bestHForThisW !== -1 && bestResult) {
-              const area = w * bestHForThisW;
-              const isDup = foundOptions.some(o => Math.abs(o.w - w) < 0.1 && Math.abs(o.h - bestHForThisW) < 0.1);
-              
-              if (!isDup) {
-                  const wastes = calculateWaste(P_W, P_H, bestResult.blocks);
-                  foundOptions.push({
-                      id: `opt-${w}-${bestHForThisW}`,
-                      w: parseFloat(w.toFixed(1)),
-                      h: parseFloat(bestHForThisW.toFixed(1)),
-                      area: area,
-                      label: bestResult.description,
-                      totalYield: bestResult.total, 
-                      wastes: wastes 
-                  });
-              }
-          }
-      }
+            if (bestHForThisW !== -1 && bestResult) {
+                const area = w * bestHForThisW;
+                const isDup = foundOptions.some(o => Math.abs(o.w - w) < 0.1 && Math.abs(o.h - bestHForThisW) < 0.1);
+                
+                if (!isDup) {
+                    const wastes = calculateWaste(P_W, P_H, bestResult.blocks);
+                    foundOptions.push({
+                        id: `opt-${w}-${bestHForThisW}`,
+                        w: parseFloat(w.toFixed(1)),
+                        h: parseFloat(bestHForThisW.toFixed(1)),
+                        area: area,
+                        label: bestResult.description,
+                        totalYield: bestResult.total, 
+                        wastes: wastes 
+                    });
+                }
+            }
+        }
 
-      foundOptions.sort((a, b) => b.area - a.area);
-      
-      setDivisionOptions(foundOptions);
-      setVisibleCount(3); 
+        foundOptions.sort((a, b) => b.area - a.area);
+        
+        setDivisionOptions(foundOptions);
+        setVisibleCount(3); 
 
-      if (foundOptions.length > 0) {
-          handleSelectGrid(foundOptions[0]);
-      } else {
-          setSelectedGrid(null);
-      }
+        if (foundOptions.length > 0) {
+            handleSelectGrid(foundOptions[0]);
+        } else {
+            setSelectedGrid(null);
+        }
+        
+        setIsCalculating(false);
+      }, 100);
   };
 
   const handleSelectGrid = (opt: any) => {
@@ -259,10 +298,15 @@ const PaperCalculator: React.FC = () => {
       });
   };
 
-  useEffect(() => { if (activeTab === 'optimize') calculateOptimization(); }, [paper, item, activeTab, getBestYield]);
+  useEffect(() => { 
+      if (activeTab === 'optimize') {
+          const timer = setTimeout(() => calculateOptimization(), 200);
+          return () => clearTimeout(timer);
+      }
+  }, [paper, item, activeTab, getBestYield]);
   useEffect(() => { 
       if (activeTab === 'divide') {
-          const timer = setTimeout(() => calculateDivisionOptions(), 300);
+          const timer = setTimeout(() => calculateDivisionOptions(), 400);
           return () => clearTimeout(timer);
       }
   }, [paper, targetQuantity, minSize, maxSize, activeTab, getBestYield]);
@@ -384,7 +428,12 @@ const PaperCalculator: React.FC = () => {
                 </div>
             </div>
 
-            {optimizationResult && !optimizationResult.error ? (
+            {isCalculating ? (
+                <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl text-center mb-4">
+                    <RefreshCw className="w-8 h-8 text-blue-600 mx-auto mb-2 animate-spin" />
+                    <div className="text-blue-600 font-medium">Đang tính toán...</div>
+                </div>
+            ) : optimizationResult && !optimizationResult.error ? (
                 <div className="bg-blue-600 text-white p-5 rounded-xl shadow-lg mb-4 text-center">
                     <div className="text-blue-100 text-xs uppercase font-bold tracking-wider mb-1">Số lượng tối đa</div>
                     <div className="text-5xl font-bold mb-2">{optimizationResult.total} <span className="text-xl font-normal">con</span></div>
@@ -402,7 +451,11 @@ const PaperCalculator: React.FC = () => {
                 </div>
             ) : optimizationResult?.error ? (
                  <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center border border-red-100">{optimizationResult.error}</div>
-            ) : null}
+            ) : (
+                <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl text-center">
+                    <div className="text-gray-400 text-sm">Nhập kích thước để tính toán</div>
+                </div>
+            )}
           </div>
         )}
 
@@ -442,7 +495,12 @@ const PaperCalculator: React.FC = () => {
                 </div>
             </div>
 
-             {divisionOptions.length > 0 ? (
+             {isCalculating ? (
+                <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl text-center mb-4">
+                    <RefreshCw className="w-8 h-8 text-blue-600 mx-auto mb-2 animate-spin" />
+                    <div className="text-blue-600 font-medium">Đang tính toán...</div>
+                </div>
+             ) : divisionOptions.length > 0 ? (
                 <div className="space-y-3">
                     <div className="text-xs font-bold text-gray-400 uppercase ml-1 flex justify-between">
                         <span>Kết quả tối ưu nhất:</span>
@@ -496,8 +554,8 @@ const PaperCalculator: React.FC = () => {
                 </div>
              ) : (
                  <div className="text-center text-gray-400 py-8 bg-white rounded-xl border border-dashed border-gray-300">
-                     <p>Đang tìm kiếm hoặc không tìm thấy...</p>
-                     <p className="text-xs mt-1">(Thử điều chỉnh kích thước Min/Max)</p>
+                     <p>Không tìm thấy phương án phù hợp</p>
+                     <p className="text-xs mt-1">(Thử điều chỉnh số lượng hoặc kích thước Min/Max)</p>
                  </div>
              )}
           </div>
@@ -528,7 +586,7 @@ const PaperCalculator: React.FC = () => {
                 <canvas ref={canvasRef} width={600} height={400} className="w-full h-auto max-w-full shadow-lg bg-white" />
              </div>
         </div>
-        <div className="mt-8 text-center text-xs text-gray-400">Hỗ trợ tính toán cắt bù hao • Tối ưu hiển thị mobile</div>
+        
       </div>
     </div>
   );
@@ -1173,7 +1231,7 @@ const App: React.FC = () => {
             </div>
             
             {/* Content Placeholder */}
-            <div className="flex-1 overflow-y-auto no-scrollbar bg-white">
+            <div className="flex-1 overflow-y-auto no-scrollbar bg-white pb-20">
                 <MaterialCalculator />
             </div>
           </div>

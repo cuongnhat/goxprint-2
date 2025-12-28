@@ -1,57 +1,103 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>GoXPrint App - TEST</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            },
-            colors: {
-              slate: {
-                850: '#151e32',
-                950: '#020617',
-              }
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>GoXPrint APP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            slate: {
+              850: '#151e32',
+              950: '#020617',
             }
           }
         }
       }
-    </script>
-    <style>
-      body {
-        background-color: #020617;
-        color: white;
-        -webkit-tap-highlight-color: transparent;
+    }
+  </script>
+  <style>
+    body {
+      background-color: #020617;
+      color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Hide scrollbar for clean mobile look */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Animation Utilities fix for CDN */
+    .animate-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    .fade-in {
+      opacity: 0;
+    }
+
+    .slide-in-from-bottom-4 {
+      animation: slideUp 0.5s ease-out forwards;
+    }
+
+    .slide-in-from-right-8 {
+      animation: slideLeft 0.5s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
       }
-      /* Hide scrollbar for clean mobile look */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
+
+      to {
+        opacity: 1;
       }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
       }
-      
-      /* Animation Utilities fix for CDN */
-      .animate-in { animation: fadeIn 0.5s ease-out forwards; }
-      .fade-in { opacity: 0; }
-      .slide-in-from-bottom-4 { animation: slideUp 0.5s ease-out forwards; }
-      .slide-in-from-right-8 { animation: slideLeft 0.5s ease-out forwards; }
-      
-      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-      @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-      @keyframes slideLeft { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideLeft {
+      from {
+        transform: translateX(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
 </html>

@@ -6,6 +6,7 @@ const GoXPrintLogo = lazy(() => import('./components/GoXPrintLogo'));
 // Import separated components
 import NumberInput from './components/NumberInput';
 import MaterialCalculator from './features/material-calculator/MaterialCalculator';
+import ImpositionCalculator from './features/imposition-calculator/ImpositionCalculator';
 
 import {
   Scissors,
@@ -1706,12 +1707,9 @@ const App: React.FC = () => {
               <h2 className="ml-2 text-lg font-semibold text-white">Tính bình trang</h2>
             </div>
 
-            {/* Content Placeholder */}
-            <div className="flex-1 p-8 flex flex-col items-center justify-center text-slate-500 space-y-4 opacity-60">
-              <div className="w-24 h-24 bg-slate-900 rounded-full flex items-center justify-center mb-2">
-                <LayoutTemplate size={40} className="text-purple-500/50" />
-              </div>
-              <p>Nội dung đang cập nhật...</p>
+            {/* Imposition Calculator Content */}
+            <div className="flex-1 overflow-y-auto no-scrollbar bg-white pb-20">
+              <ImpositionCalculator />
             </div>
           </div>
         );

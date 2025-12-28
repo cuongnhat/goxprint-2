@@ -15,8 +15,10 @@ import {
 } from 'lucide-react';
 import NumberInput from '../../components/NumberInput';
 import ModeSwitcher from '../../components/ui/ModeSwitcher';
+import { useI18n } from '../../i18n';
 
 const MaterialCalculator: React.FC = () => {
+    const { t } = useI18n();
     const [mode, setMode] = useState<'sheet' | 'roll'>('sheet');
     const [showPreview, setShowPreview] = useState(true);
 
@@ -249,7 +251,7 @@ const MaterialCalculator: React.FC = () => {
                     <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-blue-200 shadow-md">
                         <Calculator className="w-5 h-5" />
                     </div>
-                    Tính Vật Tư
+                    {t('materialCalcTitle')}
                 </h1>
                 <div className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md">v2.1</div>
             </div>
@@ -261,20 +263,20 @@ const MaterialCalculator: React.FC = () => {
                 <div className="space-y-6">
                     <section className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-                            <Box className="w-3 h-3" /> Sản phẩm (Thành phẩm)
+                            <Box className="w-3 h-3" /> {t('productMM')}
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
-                            <NumberInput label="Chiều Dài" value={product.w} onChange={(v) => setProduct({ ...product, w: v || 0 })} suffix="mm" />
-                            <NumberInput label="Chiều Rộng" value={product.h} onChange={(v) => setProduct({ ...product, h: v || 0 })} suffix="mm" />
+                            <NumberInput label={t('length')} value={product.w} onChange={(v) => setProduct({ ...product, w: v || 0 })} suffix="mm" />
+                            <NumberInput label={t('widthLabel')} value={product.h} onChange={(v) => setProduct({ ...product, h: v || 0 })} suffix="mm" />
                         </div>
                         <div className="flex gap-3">
                             <div className="flex-1">
-                                <NumberInput label="Số lượng cần" value={product.qty} onChange={(v) => setProduct({ ...product, qty: v || 0 })} suffix="cái" className="text-blue-600 font-bold" />
+                                <NumberInput label={t('qtyNeeded')} value={product.qty} onChange={(v) => setProduct({ ...product, qty: v || 0 })} suffix={t('pcs')} className="text-blue-600 font-bold" />
                             </div>
                             <button
                                 onClick={() => setProduct({ ...product, w: product.h, h: product.w })}
                                 className="w-12 h-[50px] mt-[26px] bg-gray-100 rounded-xl flex items-center justify-center text-gray-500 active:scale-95 transition-transform"
-                                title="Đảo chiều"
+                                title={t('swapBtn')}
                             >
                                 <RefreshCw className="w-5 h-5" />
                             </button>
@@ -284,22 +286,22 @@ const MaterialCalculator: React.FC = () => {
                     {/* 4. Material Input Card */}
                     <section className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-                            <Settings className="w-3 h-3" /> {mode === 'sheet' ? 'Khổ Giấy Nguyên Liệu' : 'Khổ Cuộn Nguyên Liệu'}
+                            <Settings className="w-3 h-3" /> {mode === 'sheet' ? t('materialSheet') : t('materialRoll')}
                         </h3>
 
                         {mode === 'sheet' ? (
                             <>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <NumberInput label="Khổ Dài" value={sheetMaterial.w} onChange={(v) => setSheetMaterial({ ...sheetMaterial, w: v || 0 })} suffix="mm" />
-                                    <NumberInput label="Khổ Rộng" value={sheetMaterial.h} onChange={(v) => setSheetMaterial({ ...sheetMaterial, h: v || 0 })} suffix="mm" />
+                                    <NumberInput label={t('sheetLength')} value={sheetMaterial.w} onChange={(v) => setSheetMaterial({ ...sheetMaterial, w: v || 0 })} suffix="mm" />
+                                    <NumberInput label={t('sheetWidth')} value={sheetMaterial.h} onChange={(v) => setSheetMaterial({ ...sheetMaterial, h: v || 0 })} suffix="mm" />
                                 </div>
-                                <NumberInput label="Giá nhập (tờ lớn)" value={sheetMaterial.price} onChange={(v) => setSheetMaterial({ ...sheetMaterial, price: v || 0 })} suffix="đ" className="text-emerald-600" />
+                                <NumberInput label={t('sheetPrice')} value={sheetMaterial.price} onChange={(v) => setSheetMaterial({ ...sheetMaterial, price: v || 0 })} suffix={t('currency')} className="text-emerald-600" />
                             </>
                         ) : (
                             <>
                                 {/* Multi-Width Inputs */}
                                 <div className="space-y-2 mb-4">
-                                    <label className="block text-xs font-medium text-gray-500">Khổ Rộng (Nhập nhiều để so sánh)</label>
+                                    <label className="block text-xs font-medium text-gray-500">{t('rollWidthInput')}</label>
                                     {rollMaterial.widths.map((w, idx) => (
                                         <div key={idx} className="flex gap-2 items-center animate-in slide-in-from-bottom-2 duration-300">
                                             <NumberInput
@@ -322,30 +324,30 @@ const MaterialCalculator: React.FC = () => {
                                         onClick={addRollWidth}
                                         className="w-full py-2 border-2 border-dashed border-gray-200 text-gray-400 rounded-xl flex items-center justify-center gap-2 hover:border-blue-300 hover:text-blue-500 transition-colors text-sm font-semibold"
                                     >
-                                        <Plus className="w-4 h-4" /> Thêm khổ khác
+                                        <Plus className="w-4 h-4" /> {t('addOtherWidth')}
                                     </button>
                                 </div>
 
                                 <div className="bg-gray-50 p-1 rounded-xl flex mb-2">
-                                    <button onClick={() => setRollMaterial({ ...rollMaterial, priceMode: 'area' })} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${rollMaterial.priceMode === 'area' ? 'bg-white shadow text-blue-600' : 'text-gray-400'}`}>Giá theo m²</button>
-                                    <button onClick={() => setRollMaterial({ ...rollMaterial, priceMode: 'linear' })} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${rollMaterial.priceMode === 'linear' ? 'bg-white shadow text-blue-600' : 'text-gray-400'}`}>Giá theo md</button>
+                                    <button onClick={() => setRollMaterial({ ...rollMaterial, priceMode: 'area' })} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${rollMaterial.priceMode === 'area' ? 'bg-white shadow text-blue-600' : 'text-gray-400'}`}>{t('pricePerSqm')}</button>
+                                    <button onClick={() => setRollMaterial({ ...rollMaterial, priceMode: 'linear' })} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${rollMaterial.priceMode === 'linear' ? 'bg-white shadow text-blue-600' : 'text-gray-400'}`}>{t('pricePerMeter')}</button>
                                 </div>
 
                                 {rollMaterial.priceMode === 'area' ? (
                                     <div className="space-y-2">
-                                        <NumberInput label="Đơn giá m²" value={rollMaterial.areaPrice} onChange={(v) => setRollMaterial({ ...rollMaterial, areaPrice: v || 0 })} suffix="đ/m²" className="text-emerald-600" />
+                                        <NumberInput label={t('unitPriceSqm')} value={rollMaterial.areaPrice} onChange={(v) => setRollMaterial({ ...rollMaterial, areaPrice: v || 0 })} suffix="đ/m²" className="text-emerald-600" />
                                         {activeResult && activeResult.type === 'roll' && (
                                             <div className="text-[10px] text-gray-400 px-2 flex items-center gap-1">
                                                 <ArrowRight className="w-3 h-3" />
-                                                Đang xem khổ {activeResult.widthLabel}mm: {((rollMaterial.areaPrice * activeResult.widthLabel) / 1000).toLocaleString('vi-VN')} đ/md
+                                                {t('viewingWidth')} {activeResult.widthLabel}mm: {((rollMaterial.areaPrice * activeResult.widthLabel) / 1000).toLocaleString('vi-VN')} đ/md
                                             </div>
                                         )}
                                     </div>
                                 ) : (
                                     <div>
-                                        <NumberInput label="Đơn giá mét dài" value={rollMaterial.price} onChange={(v) => setRollMaterial({ ...rollMaterial, price: v || 0 })} suffix="đ/md" className="text-emerald-600" />
+                                        <NumberInput label={t('unitPriceMeter')} value={rollMaterial.price} onChange={(v) => setRollMaterial({ ...rollMaterial, price: v || 0 })} suffix="đ/md" className="text-emerald-600" />
                                         <div className="text-[10px] text-amber-500 px-2 mt-1">
-                                            *Lưu ý: Giá md này sẽ áp dụng cho tất cả các khổ đang nhập.
+                                            {t('priceNote')}
                                         </div>
                                     </div>
                                 )}
@@ -358,24 +360,24 @@ const MaterialCalculator: React.FC = () => {
                         <div className="sticky bottom-0 left-0 right-0 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-lg z-40">
                             <div className="grid grid-cols-3 gap-4 items-center">
                                 <div>
-                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">Vật tư</div>
+                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">{t('material')}</div>
                                     <div className="text-base font-bold text-gray-900">
                                         {activeResult.totalMaterial.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}
-                                        <span className="text-xs font-normal text-gray-500 ml-1">{mode === 'sheet' ? 'tờ' : 'm'}</span>
+                                        <span className="text-xs font-normal text-gray-500 ml-1">{mode === 'sheet' ? t('sheet') : t('meter')}</span>
                                     </div>
                                 </div>
                                 <div className="text-center border-l border-r border-gray-100">
-                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">Đơn giá</div>
+                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">{t('unitPrice')}</div>
                                     <div className="text-base font-bold text-emerald-600">
                                         {Math.round(activeResult.costPerItem).toLocaleString('vi-VN')}
-                                        <span className="text-[10px] text-gray-400 ml-0.5">đ</span>
+                                        <span className="text-[10px] text-gray-400 ml-0.5">{t('currency')}</span>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">Tổng tiền</div>
+                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">{t('totalPrice')}</div>
                                     <div className="text-base font-bold text-blue-600">
                                         {Math.round(activeResult.totalCost).toLocaleString('vi-VN')}
-                                        <span className="text-[10px] text-gray-400 ml-0.5">đ</span>
+                                        <span className="text-[10px] text-gray-400 ml-0.5">{t('currency')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -388,7 +390,7 @@ const MaterialCalculator: React.FC = () => {
                             {/* Comparison List (Only for Roll Multi-Width) */}
                             {mode === 'roll' && results.length > 1 && (
                                 <div className="mb-4 space-y-2">
-                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">So sánh phương án</h3>
+                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">{t('compareOptions')}</h3>
                                     {results.map((res, idx) => (
                                         <div
                                             key={res.id}
@@ -400,15 +402,15 @@ const MaterialCalculator: React.FC = () => {
                                                     {res.isBest ? <Trophy className="w-4 h-4" /> : idx + 1}
                                                 </div>
                                                 <div>
-                                                    <div className="font-bold text-gray-800 text-sm">Khổ {res.widthLabel}mm</div>
-                                                    <div className="text-xs text-gray-500">{res.yieldPerUnit} con/m</div>
+                                                    <div className="font-bold text-gray-800 text-sm">{t('rollWidth')} {res.widthLabel}mm</div>
+                                                    <div className="text-xs text-gray-500">{res.yieldPerUnit} {t('pcsPerMeter')}</div>
                                                 </div>
                                             </div>
                                             <div className="text-right">
                                                 <div className={`font-bold text-sm ${res.isBest ? 'text-blue-600' : 'text-gray-600'}`}>
-                                                    {Math.round(res.costPerItem).toLocaleString('vi-VN')} đ
+                                                    {Math.round(res.costPerItem).toLocaleString('vi-VN')} {t('currency')}
                                                 </div>
-                                                {res.isBest && <span className="text-[10px] font-semibold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded">Tốt nhất</span>}
+                                                {res.isBest && <span className="text-[10px] font-semibold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded">{t('best')}</span>}
                                             </div>
                                         </div>
                                     ))}
@@ -421,7 +423,7 @@ const MaterialCalculator: React.FC = () => {
                                     onClick={() => setShowPreview(!showPreview)}
                                 >
                                     <span className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                                        <Maximize className="w-3 h-3" /> Sơ đồ cắt ({mode === 'roll' ? `Khổ ${activeResult.widthLabel}mm` : 'Giấy lớn'})
+                                        <Maximize className="w-3 h-3" /> {t('cuttingDiagram')} ({mode === 'roll' ? `${t('rollWidth')} ${activeResult.widthLabel}mm` : t('bigSheet')})
                                     </span>
                                     {showPreview ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                 </div>
@@ -432,16 +434,16 @@ const MaterialCalculator: React.FC = () => {
                                 )}
                                 <div className="bg-white px-4 py-3 border-t border-gray-100 grid grid-cols-2 gap-4 text-xs">
                                     <div>
-                                        <span className="block text-gray-400 mb-0.5">Kiểu ghép</span>
+                                        <span className="block text-gray-400 mb-0.5">{t('layoutType')}</span>
                                         <span className="font-semibold text-gray-700">{activeResult.description}</span>
                                     </div>
                                     <div className="text-right">
-                                        <span className="block text-gray-400 mb-0.5">{mode === 'sheet' ? 'Con / Tờ' : 'Con / Mét'}</span>
+                                        <span className="block text-gray-400 mb-0.5">{mode === 'sheet' ? t('pcsPerSheet') : t('pcsPerM')}</span>
                                         <span className="font-bold text-blue-600 text-sm">{activeResult.yieldPerUnit}</span>
                                     </div>
                                     {activeResult.wasteW !== undefined && (
                                         <div className="col-span-2 flex justify-between pt-2 border-t border-gray-50">
-                                            <span className="text-gray-400">Bù hao biên (mép thừa)</span>
+                                            <span className="text-gray-400">{t('edgeWaste')}</span>
                                             <span className="font-medium text-red-500">{activeResult.wasteW.toFixed(1)} mm</span>
                                         </div>
                                     )}

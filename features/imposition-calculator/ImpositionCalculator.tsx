@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import NumberInput from '../../components/NumberInput';
 import { calculateLayout, LayoutPlan } from './layoutSolver';
+import { useI18n } from '../../i18n';
 
 // Các khổ giấy preset (chỉ lưu kích thước trang, vùng in tự tính)
 const PAPER_PRESETS = [
@@ -26,13 +27,9 @@ const PAPER_PRESETS = [
     { label: 'A3', w: 297, h: 420 },
 ];
 
-const SHAPES = [
-    { value: 'rect' as const, label: 'Chữ nhật', icon: Square },
-    { value: 'circle' as const, label: 'Tròn', icon: Circle },
-    { value: 'oval' as const, label: 'Oval', icon: RectangleHorizontal },
-];
-
 const ImpositionCalculator: React.FC = () => {
+    const { t } = useI18n();
+
     // Config state
     const [shape, setShape] = useState<'rect' | 'circle' | 'oval'>('rect');
     const [itemW, setItemW] = useState(100);
@@ -221,9 +218,9 @@ const ImpositionCalculator: React.FC = () => {
                     <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white shadow-purple-200 shadow-md">
                         <Grid3X3 className="w-5 h-5" />
                     </div>
-                    Tính Bình Trang
+                    {t('impTitle')}
                 </h1>
-                <div className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md">v1.0</div>
+                <div className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md">{t('version')}</div>
             </div>
 
             <div className="max-w-md mx-auto px-4 pt-6">
@@ -232,10 +229,14 @@ const ImpositionCalculator: React.FC = () => {
                     {/* Shape Selector */}
                     <section className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-                            <Box className="w-3 h-3" /> Hình dạng sản phẩm
+                            <Box className="w-3 h-3" /> {t('shapeLabel')}
                         </h3>
                         <div className="grid grid-cols-3 gap-2">
-                            {SHAPES.map(s => (
+                            {[
+                                { value: 'rect' as const, labelKey: 'shapeRect' as const, icon: Square },
+                                { value: 'circle' as const, labelKey: 'shapeCircle' as const, icon: Circle },
+                                { value: 'oval' as const, labelKey: 'shapeOval' as const, icon: RectangleHorizontal },
+                            ].map(s => (
                                 <button
                                     key={s.value}
                                     onClick={() => setShape(s.value)}
@@ -245,37 +246,38 @@ const ImpositionCalculator: React.FC = () => {
                                         }`}
                                 >
                                     <s.icon className="w-5 h-5" />
-                                    <span className="text-xs font-semibold">{s.label}</span>
+                                    <span className="text-xs font-semibold">{t(s.labelKey)}</span>
                                 </button>
                             ))}
                         </div>
                     </section>
 
+
                     {/* Item Dimensions */}
                     <section className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">
-                            Kích thước sản phẩm
+                            {t('productSize')}
                         </h3>
                         <div className={`grid gap-3 ${shape === 'circle' ? 'grid-cols-2' : 'grid-cols-3'}`}>
                             <NumberInput
-                                label="Chiều rộng"
+                                label={t('width')}
                                 value={itemW}
                                 onChange={(v) => setItemW(v || 0)}
-                                suffix="mm"
+                                suffix={t('mm')}
                             />
                             {shape !== 'circle' && (
                                 <NumberInput
-                                    label="Chiều cao"
+                                    label={t('height')}
                                     value={itemH}
                                     onChange={(v) => setItemH(v || 0)}
-                                    suffix="mm"
+                                    suffix={t('mm')}
                                 />
                             )}
                             <NumberInput
-                                label="Khoảng cách"
+                                label={t('spacing')}
                                 value={padding}
                                 onChange={(v) => setPadding(v || 0)}
-                                suffix="mm"
+                                suffix={t('mm')}
                             />
                         </div>
                     </section>
@@ -283,7 +285,7 @@ const ImpositionCalculator: React.FC = () => {
                     {/* Page Settings */}
                     <section className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-                            <Grid3X3 className="w-3 h-3" /> Khổ giấy in
+                            <Grid3X3 className="w-3 h-3" /> {t('paperSize')}
                         </h3>
 
                         {/* Presets */}
@@ -305,7 +307,7 @@ const ImpositionCalculator: React.FC = () => {
                         {/* Custom size */}
                         <div className="flex items-end gap-2">
                             <div className="flex-1">
-                                <NumberInput label="Rộng" value={pageW} onChange={handlePageWChange} suffix="mm" />
+                                <NumberInput label={t('pageWidth')} value={pageW} onChange={handlePageWChange} suffix={t('mm')} />
                             </div>
                             <button
                                 onClick={swapDims}
@@ -314,7 +316,7 @@ const ImpositionCalculator: React.FC = () => {
                                 <RefreshCw className="w-5 h-5" />
                             </button>
                             <div className="flex-1">
-                                <NumberInput label="Cao" value={pageH} onChange={handlePageHChange} suffix="mm" />
+                                <NumberInput label={t('pageHeight')} value={pageH} onChange={handlePageHChange} suffix={t('mm')} />
                             </div>
                         </div>
 
@@ -328,7 +330,7 @@ const ImpositionCalculator: React.FC = () => {
                                     className="rounded text-rose-600 focus:ring-rose-500"
                                 />
                                 <span className={`text-[10px] font-bold uppercase ${usePrintArea ? 'text-rose-600' : 'text-gray-400'}`}>
-                                    Vùng in thực tế (Áp dụng cho decal)
+                                    {t('printArea')}
                                 </span>
                             </label>
                             {usePrintArea && (
@@ -343,20 +345,20 @@ const ImpositionCalculator: React.FC = () => {
                     {/* Order & Price */}
                     <section className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-                            <Calculator className="w-3 h-3" /> Đơn hàng & Giá
+                            <Calculator className="w-3 h-3" /> {t('orderPrice')}
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
                             <NumberInput
-                                label="Số lượng đặt"
+                                label={t('orderQty')}
                                 value={totalOrder}
                                 onChange={(v) => setTotalOrder(v || 0)}
-                                suffix="cái"
+                                suffix={t('pcs')}
                             />
                             <NumberInput
-                                label="Giá in/tờ"
+                                label={t('pricePerSheet')}
                                 value={unitPrice}
                                 onChange={(v) => setUnitPrice(v || 0)}
-                                suffix="đ"
+                                suffix={t('currency')}
                             />
                         </div>
                     </section>
@@ -366,19 +368,19 @@ const ImpositionCalculator: React.FC = () => {
                         <div className="sticky bottom-0 left-0 right-0 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-lg z-40">
                             <div className="grid grid-cols-4 gap-2 items-center text-center">
                                 <div>
-                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">Tem/tờ</div>
+                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">{t('itemsPerSheet')}</div>
                                     <div className="text-lg font-bold text-purple-600">{currentPlan.qty}</div>
                                 </div>
                                 <div className="border-l border-gray-100">
-                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">Số tờ</div>
+                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">{t('totalSheets')}</div>
                                     <div className="text-lg font-bold text-gray-900">{sheets.toLocaleString()}</div>
                                 </div>
                                 <div className="border-l border-gray-100">
-                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">Đ/tem</div>
+                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">{t('pricePerItem')}</div>
                                     <div className="text-base font-bold text-emerald-600">{Math.round(pricePerItem).toLocaleString()}</div>
                                 </div>
                                 <div className="border-l border-gray-100">
-                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">Tổng</div>
+                                    <div className="text-[10px] text-gray-400 font-semibold uppercase">{t('totalCost')}</div>
                                     <div className="text-base font-bold text-blue-600">{totalCost.toLocaleString()}</div>
                                 </div>
                             </div>
@@ -403,7 +405,7 @@ const ImpositionCalculator: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-purple-600 text-xs font-semibold">
-                                    {plans.length} phương án
+                                    {plans.length} {t('plans')}
                                 </div>
                             </button>
 
@@ -414,7 +416,7 @@ const ImpositionCalculator: React.FC = () => {
                                     onClick={() => setShowPreview(!showPreview)}
                                 >
                                     <span className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                                        <Maximize className="w-3 h-3" /> Sơ đồ xếp hình
+                                        <Maximize className="w-3 h-3" /> {t('layoutDiagram')}
                                     </span>
                                     {showPreview ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                 </div>
@@ -428,7 +430,7 @@ const ImpositionCalculator: React.FC = () => {
                     ) : (
                         <div className="bg-red-50 p-4 rounded-xl text-red-600 text-sm flex items-center gap-2 border border-red-100">
                             <AlertCircle className="w-5 h-5" />
-                            Không tìm thấy phương án phù hợp. Hãy thử giảm kích thước sản phẩm.
+                            {t('noLayoutFound')}
                         </div>
                     )}
 
@@ -444,7 +446,7 @@ const ImpositionCalculator: React.FC = () => {
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-                            <h3 className="font-bold text-lg text-gray-900">Chọn phương án</h3>
+                            <h3 className="font-bold text-lg text-gray-900">{t('selectPlan')}</h3>
                             <button onClick={() => setShowPlanModal(false)} className="p-2 hover:bg-gray-200 rounded-lg text-gray-500">
                                 ✕
                             </button>
@@ -472,12 +474,12 @@ const ImpositionCalculator: React.FC = () => {
                                         </div>
                                         <div className="text-right">
                                             <div className="text-lg font-bold text-purple-600">{plan.qty}</div>
-                                            <div className="text-xs text-gray-400">tem/tờ</div>
+                                            <div className="text-xs text-gray-400">{t('itemsPerSheet')}</div>
                                         </div>
                                     </div>
                                     {idx === currentPlanIndex && (
                                         <div className="mt-2 flex items-center justify-center gap-1 text-purple-600 text-xs font-semibold">
-                                            <Check className="w-4 h-4" /> Đang chọn
+                                            <Check className="w-4 h-4" /> {t('selected')}
                                         </div>
                                     )}
                                 </div>

@@ -7,6 +7,7 @@ const GoXPrintLogo = lazy(() => import('./components/GoXPrintLogo'));
 import NumberInput from './components/NumberInput';
 import MaterialCalculator from './features/material-calculator/MaterialCalculator';
 import ImpositionCalculator from './features/imposition-calculator/ImpositionCalculator';
+import { I18nProvider, useI18n, Language } from './i18n';
 
 import {
   Scissors,
@@ -43,6 +44,7 @@ import {
 // PAPER CALCULATOR COMPONENT
 // ==========================================
 const PaperCalculator: React.FC = () => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState('optimize');
   const [showPreview, setShowPreview] = useState(true);
 
@@ -1133,7 +1135,7 @@ const PaperCalculator: React.FC = () => {
         <div className="flex items-center justify-between px-4 py-3">
           <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <Box className="w-5 h-5 text-blue-600" />
-            Tính Khổ Giấy
+            {t('paperCalcTitle')}
           </h1>
           <button onClick={() => setShowPreview(!showPreview)} className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition">
             {showPreview ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
@@ -1144,30 +1146,30 @@ const PaperCalculator: React.FC = () => {
       <div className="px-4 pt-4">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
           <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide">
-            <Maximize className="w-4 h-4" /> Khổ Giấy Lớn (mm)
+            <Maximize className="w-4 h-4" /> {t('bigPaperSize')} (mm)
           </div>
           <div className="grid grid-cols-2 gap-3 mb-3">
-            <NumberInput label="Chiều Dài" value={paper.w} onChange={(v: number | null) => setPaper({ ...paper, w: v || 0 })} suffix="mm" />
-            <NumberInput label="Chiều Rộng" value={paper.h} onChange={(v: number | null) => setPaper({ ...paper, h: v || 0 })} suffix="mm" />
+            <NumberInput label={t('length')} value={paper.w} onChange={(v: number | null) => setPaper({ ...paper, w: v || 0 })} suffix="mm" />
+            <NumberInput label={t('widthLabel')} value={paper.h} onChange={(v: number | null) => setPaper({ ...paper, h: v || 0 })} suffix="mm" />
           </div>
 
           <div className="pt-3 border-t border-gray-100">
             <div className="grid grid-cols-2 gap-3">
               <div className="relative">
                 <label className="block text-xs text-gray-500 mb-1 flex items-center gap-1">
-                  <DollarSign className="w-3 h-3" /> Giá giấy lớn
+                  <DollarSign className="w-3 h-3" /> {t('bigPaperPrice')}
                 </label>
                 <NumberInput
                   value={paperPrice}
                   onChange={(v: number | null) => setPaperPrice(v || 0)}
-                  placeholder="VD: 5000"
-                  suffix="đ"
+                  placeholder={t('examplePrice')}
+                  suffix={t('currency')}
                   className="text-emerald-600"
                 />
               </div>
               <div className="relative">
                 <label className="block text-xs text-gray-500 mb-1 flex items-center gap-1">
-                  <Scissors className="w-3 h-3" /> Máy xén (chiều dài)
+                  <Scissors className="w-3 h-3" /> {t('cutterMaxLabel')}
                 </label>
                 <NumberInput
                   value={cutterMaxLength}
@@ -1183,10 +1185,10 @@ const PaperCalculator: React.FC = () => {
 
         <div className="flex p-1 bg-gray-200 rounded-lg mb-4">
           <button className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'optimize' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('optimize')}>
-            Tối ưu cắt (Nhập Size)
+            {t('tabOptimizeSize')}
           </button>
           <button className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'divide' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('divide')}>
-            Chia số lượng
+            {t('tabDivideQty')}
           </button>
         </div>
 
@@ -1194,24 +1196,24 @@ const PaperCalculator: React.FC = () => {
           <div className="animate-in fade-in duration-300">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
               <div className="flex justify-between items-center mb-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase"><Settings className="w-4 h-4" /> Thành phẩm (mm)</div>
-                <button onClick={() => setItem({ w: item.h, h: item.w })} className="text-xs flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100"><RotateCcw className="w-3 h-3" /> Đổi chiều</button>
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase"><Settings className="w-4 h-4" /> {t('productMM')}</div>
+                <button onClick={() => setItem({ w: item.h, h: item.w })} className="text-xs flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100"><RotateCcw className="w-3 h-3" /> {t('swapDimension')}</button>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <NumberInput label="Dài" value={item.w} onChange={(v: number | null) => setItem({ ...item, w: v || 0 })} suffix="mm" />
-                <NumberInput label="Rộng" value={item.h} onChange={(v: number | null) => setItem({ ...item, h: v || 0 })} suffix="mm" />
+                <NumberInput label={t('length')} value={item.w} onChange={(v: number | null) => setItem({ ...item, w: v || 0 })} suffix="mm" />
+                <NumberInput label={t('widthLabel')} value={item.h} onChange={(v: number | null) => setItem({ ...item, h: v || 0 })} suffix="mm" />
               </div>
             </div>
 
             {isCalculating ? (
               <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl text-center mb-4">
                 <RefreshCw className="w-8 h-8 text-blue-600 mx-auto mb-2 animate-spin" />
-                <div className="text-blue-600 font-medium">Đang tính toán...</div>
+                <div className="text-blue-600 font-medium">{t('calculating')}</div>
               </div>
             ) : optimizationResult && !optimizationResult.error ? (
               <div className="bg-blue-600 text-white p-5 rounded-xl shadow-lg mb-4 text-center">
-                <div className="text-blue-100 text-xs uppercase font-bold tracking-wider mb-1">Số lượng tối đa</div>
-                <div className="text-5xl font-bold mb-2">{optimizationResult.total} <span className="text-xl font-normal">con</span></div>
+                <div className="text-blue-100 text-xs uppercase font-bold tracking-wider mb-1">{t('maxQty')}</div>
+                <div className="text-5xl font-bold mb-2">{optimizationResult.total} <span className="text-xl font-normal">{t('unit')}</span></div>
                 <div className="flex justify-center gap-4 text-sm text-blue-100 border-t border-blue-500 pt-2 mt-2">
                   <span>{optimizationResult.description}</span>
                 </div>
@@ -1228,7 +1230,7 @@ const PaperCalculator: React.FC = () => {
               <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center border border-red-100">{optimizationResult.error}</div>
             ) : (
               <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl text-center">
-                <div className="text-gray-400 text-sm">Nhập kích thước để tính toán</div>
+                <div className="text-gray-400 text-sm">{t('inputSizeToCalc')}</div>
               </div>
             )}
           </div>
@@ -1238,7 +1240,7 @@ const PaperCalculator: React.FC = () => {
           <div className="animate-in fade-in duration-300">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
               <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 uppercase">
-                <List className="w-4 h-4" /> Số lượng & Bộ lọc
+                <List className="w-4 h-4" /> {t('qtyAndFilter')}
               </div>
               <div className="relative mb-4">
                 <NumberInput
@@ -1246,18 +1248,18 @@ const PaperCalculator: React.FC = () => {
                   onChange={(v: number | null) => setTargetQuantity(Math.max(1, v || 0))}
                   className="text-3xl font-bold text-center text-blue-600"
                 />
-                <div className="text-center text-xs text-gray-400 mt-2">Tìm kích thước lớn nhất cho số lượng này</div>
+                <div className="text-center text-xs text-gray-400 mt-2">{t('findLargestSize')}</div>
               </div>
 
               <div className="pt-3 border-t border-gray-100">
                 <div className="flex items-center gap-2 mb-2 text-xs text-gray-500">
-                  <Filter className="w-3 h-3" /> Bộ lọc kích thước (Min - Max):
+                  <Filter className="w-3 h-3" /> {t('sizeFilter')}
                 </div>
                 <div className="grid grid-cols-4 gap-2">
-                  <NumberInput label="Min Dài" value={minSize.w} onChange={(v: number | null) => setMinSize({ ...minSize, w: v || 0 })} placeholder="Min W" className="text-sm text-center" />
-                  <NumberInput label="Max Dài" value={maxSize.w} onChange={(v: number | null) => setMaxSize({ ...maxSize, w: v || 0 })} placeholder="Max W" className="text-sm text-center" />
-                  <NumberInput label="Min Rộng" value={minSize.h} onChange={(v: number | null) => setMinSize({ ...minSize, h: v || 0 })} placeholder="Min H" className="text-sm text-center" />
-                  <NumberInput label="Max Rộng" value={maxSize.h} onChange={(v: number | null) => setMaxSize({ ...maxSize, h: v || 0 })} placeholder="Max H" className="text-sm text-center" />
+                  <NumberInput label={t('minLen')} value={minSize.w} onChange={(v: number | null) => setMinSize({ ...minSize, w: v || 0 })} placeholder="Min W" className="text-sm text-center" />
+                  <NumberInput label={t('maxLen')} value={maxSize.w} onChange={(v: number | null) => setMaxSize({ ...maxSize, w: v || 0 })} placeholder="Max W" className="text-sm text-center" />
+                  <NumberInput label={t('minWid')} value={minSize.h} onChange={(v: number | null) => setMinSize({ ...minSize, h: v || 0 })} placeholder="Min H" className="text-sm text-center" />
+                  <NumberInput label={t('maxWid')} value={maxSize.h} onChange={(v: number | null) => setMaxSize({ ...maxSize, h: v || 0 })} placeholder="Max H" className="text-sm text-center" />
                 </div>
               </div>
             </div>
@@ -1265,13 +1267,13 @@ const PaperCalculator: React.FC = () => {
             {isCalculating ? (
               <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl text-center mb-4">
                 <RefreshCw className="w-8 h-8 text-blue-600 mx-auto mb-2 animate-spin" />
-                <div className="text-blue-600 font-medium">Đang tính toán...</div>
+                <div className="text-blue-600 font-medium">{t('calculating')}</div>
               </div>
             ) : divisionOptions.length > 0 ? (
               <div className="space-y-3">
                 <div className="text-xs font-bold text-gray-400 uppercase ml-1 flex justify-between">
-                  <span>Kết quả tối ưu nhất:</span>
-                  <span>{divisionOptions.length} phương án</span>
+                  <span>{t('optimizeResult')}:</span>
+                  <span>{divisionOptions.length} {t('optionsCount')}</span>
                 </div>
 
                 {divisionOptions.slice(0, visibleCount).map((opt, idx) => (
@@ -1611,8 +1613,9 @@ const PaperCalculator: React.FC = () => {
 
 type Screen = 'home' | 'paper_calc' | 'imposition_calc' | 'material_calc';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
+  const { lang, setLang, t } = useI18n();
 
   const handleBack = () => {
     setCurrentScreen('home');
@@ -1623,6 +1626,24 @@ const App: React.FC = () => {
       case 'home':
         return (
           <div className="p-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            {/* Language Selector */}
+            <div className="flex justify-end mb-2">
+              <div className="flex items-center gap-1 bg-slate-900/80 rounded-full p-1">
+                <button
+                  onClick={() => setLang('vi')}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${lang === 'vi' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                >
+                  VI
+                </button>
+                <button
+                  onClick={() => setLang('en')}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${lang === 'en' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                >
+                  EN
+                </button>
+              </div>
+            </div>
+
             {/* Menu Grid */}
             <div className="grid grid-cols-2 gap-4 mt-2">
 
@@ -1635,8 +1656,8 @@ const App: React.FC = () => {
                   <Scissors size={28} />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-sm">Tính giấy cắt</h3>
-                  <p className="text-slate-500 text-[10px] mt-1">Paper Calculator</p>
+                  <h3 className="text-white font-semibold text-sm">{t('paperCalc')}</h3>
+                  <p className="text-slate-500 text-[10px] mt-1">{t('paperCalcSub')}</p>
                 </div>
               </button>
 
@@ -1649,8 +1670,8 @@ const App: React.FC = () => {
                   <LayoutTemplate size={28} />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-sm">Tính bình trang</h3>
-                  <p className="text-slate-500 text-[10px] mt-1">Imposition Calc</p>
+                  <h3 className="text-white font-semibold text-sm">{t('impositionCalc')}</h3>
+                  <p className="text-slate-500 text-[10px] mt-1">{t('impositionCalcSub')}</p>
                 </div>
               </button>
 
@@ -1663,11 +1684,16 @@ const App: React.FC = () => {
                   <Package size={28} />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-sm">Tính vật tư</h3>
-                  <p className="text-slate-500 text-[10px] mt-1">Material Calc</p>
+                  <h3 className="text-white font-semibold text-sm">{t('materialCalc')}</h3>
+                  <p className="text-slate-500 text-[10px] mt-1">{t('materialCalcSub')}</p>
                 </div>
               </button>
 
+            </div>
+
+            {/* Footer */}
+            <div className="mt-8 text-center">
+              <p className="text-slate-500 text-xs">{t('footer')}</p>
             </div>
           </div>
         );
@@ -1683,7 +1709,7 @@ const App: React.FC = () => {
               >
                 <ChevronLeft size={24} />
               </button>
-              <h2 className="ml-2 text-lg font-semibold text-white">Tính giấy cắt</h2>
+              <h2 className="ml-2 text-lg font-semibold text-white">{t('paperCalc')}</h2>
             </div>
 
             {/* Main Tool Content - Rendered with light theme background as per original code */}
@@ -1704,7 +1730,7 @@ const App: React.FC = () => {
               >
                 <ChevronLeft size={24} />
               </button>
-              <h2 className="ml-2 text-lg font-semibold text-white">Tính bình trang</h2>
+              <h2 className="ml-2 text-lg font-semibold text-white">{t('impositionCalc')}</h2>
             </div>
 
             {/* Imposition Calculator Content */}
@@ -1725,7 +1751,7 @@ const App: React.FC = () => {
               >
                 <ChevronLeft size={24} />
               </button>
-              <h2 className="ml-2 text-lg font-semibold text-white">Tính vật tư</h2>
+              <h2 className="ml-2 text-lg font-semibold text-white">{t('materialCalc')}</h2>
             </div>
 
             {/* Content Placeholder */}
@@ -1769,5 +1795,12 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+// Wrap in I18nProvider
+const App: React.FC = () => (
+  <I18nProvider>
+    <AppContent />
+  </I18nProvider>
+);
 
 export default App;

@@ -69,25 +69,25 @@ const MaterialCalculator: React.FC = () => {
             if (total > best.count) best = { count: total, blocks, description: desc };
         };
 
-        update([calcBlock(P_W, P_H, I_W, I_H, false)], "Dọc");
-        update([calcBlock(P_W, P_H, I_H, I_W, true)], "Ngang");
+        update([calcBlock(P_W, P_H, I_W, I_H, false)], t('verticalLayout'));
+        update([calcBlock(P_W, P_H, I_H, I_W, true)], t('horizontalLayout'));
 
         const maxColsNorm = Math.floor(P_W / I_W);
         for (let c = 1; c <= maxColsNorm; c++) {
             const cutX = c * I_W;
             const b1 = calcBlock(cutX, P_H, I_W, I_H, false);
             const b2 = calcBlock(P_W - cutX, P_H, I_H, I_W, true); b2.x = cutX;
-            update([b1, b2], `Mix Dọc (${c}) + Ngang`);
+            update([b1, b2], `${t('mixLayout')} (${c})`);
         }
         const maxRowsNorm = Math.floor(P_H / I_H);
         for (let r = 1; r <= maxRowsNorm; r++) {
             const cutY = r * I_H;
             const b1 = calcBlock(P_W, cutY, I_W, I_H, false);
             const b2 = calcBlock(P_W, P_H - cutY, I_H, I_W, true); b2.y = cutY;
-            update([b1, b2], `Mix Dọc (${r}) + Ngang`);
+            update([b1, b2], `${t('mixLayout')} (${r})`);
         }
         return best;
-    }, []);
+    }, [t]);
 
     const calculateRollUsage = useCallback((RollW: number, I_W: number, I_H: number, Qty: number) => {
         if (RollW < Math.min(I_W, I_H)) return null;
@@ -105,9 +105,9 @@ const MaterialCalculator: React.FC = () => {
         const blocks = [];
         if (nA > 0) blocks.push({ type: 'normal', x: 0, y: 0, cols: nA, rows: 1, itemW: I_W, itemH: I_H, width: nA * I_W, height: I_H });
         if (nB > 0) blocks.push({ type: 'rotated', x: nA * I_W, y: 0, cols: nB, rows: 1, itemW: I_H, itemH: I_W, width: nB * I_H, height: I_W });
-        let desc = nA > 0 && nB === 0 ? "Dọc toàn bộ" : nA === 0 && nB > 0 ? "Ngang toàn bộ" : `Mix: ${nA} Dọc + ${nB} Ngang`;
+        let desc = nA > 0 && nB === 0 ? t('allVerticalLayout') : nA === 0 && nB > 0 ? t('allHorizontalLayout') : `${t('mixLayout')}: ${nA} + ${nB}`;
         return { totalLength, blocks, description: desc, wasteW: RollW - ((nA * I_W) + (nB * I_H)), density: maxDensity, itemsPerMeter: maxDensity * 1000 };
-    }, []);
+    }, [t]);
 
     // --- Effect: Calculate ---
     useEffect(() => {
@@ -136,7 +136,7 @@ const MaterialCalculator: React.FC = () => {
                 }]);
                 setSelectedResultIndex(0);
             } else {
-                setResults([{ error: "Sản phẩm lớn hơn khổ giấy!" }]);
+                setResults([{ error: t('productTooLarge') }]);
                 setSelectedResultIndex(0);
             }
         } else {
@@ -177,7 +177,7 @@ const MaterialCalculator: React.FC = () => {
                 setResults(calculatedOptions);
                 setSelectedResultIndex(0);
             } else {
-                setResults([{ error: "Không tìm thấy khổ phù hợp hoặc chưa nhập khổ!" }]);
+                setResults([{ error: t('noMatchingWidth') }]);
                 setSelectedResultIndex(0);
             }
         }

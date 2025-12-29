@@ -37,7 +37,8 @@ import {
   Trophy,
   CheckCircle,
   Printer,
-  BookOpen
+  BookOpen,
+  Download
 } from 'lucide-react';
 
 // ==========================================
@@ -109,8 +110,8 @@ const PaperCalculator: React.FC = () => {
     };
 
     // 1. Simple Grid
-    update([calcBlock(P_W, P_H, I_W, I_H, false)], "Tất cả Dọc");
-    update([calcBlock(P_W, P_H, I_H, I_W, true)], "Tất cả Ngang");
+    update([calcBlock(P_W, P_H, I_W, I_H, false)], t('allVertical'));
+    update([calcBlock(P_W, P_H, I_H, I_W, true)], t('allHorizontal'));
 
     // 2. Vertical Cut
     const maxColsNorm = Math.floor(P_W / I_W);
@@ -119,7 +120,7 @@ const PaperCalculator: React.FC = () => {
       const b1 = calcBlock(cutX, P_H, I_W, I_H, false);
       const b2 = calcBlock(P_W - cutX, P_H, I_H, I_W, true);
       b2.x = cutX;
-      update([b1, b2], `Dọc (${c} cột) + Ngang`);
+      update([b1, b2], `${t('verticalLayout')} (${c} ${t('colsText')}) + ${t('horizontalLayout')}`);
     }
 
     const maxColsRot = Math.floor(P_W / I_H);
@@ -128,7 +129,7 @@ const PaperCalculator: React.FC = () => {
       const b1 = calcBlock(cutX, P_H, I_H, I_W, true);
       const b2 = calcBlock(P_W - cutX, P_H, I_W, I_H, false);
       b2.x = cutX;
-      update([b1, b2], `Ngang (${c} cột) + Dọc`);
+      update([b1, b2], `${t('horizontalLayout')} (${c} ${t('colsText')}) + ${t('verticalLayout')}`);
     }
 
     // 3. Horizontal Cut
@@ -138,7 +139,7 @@ const PaperCalculator: React.FC = () => {
       const b1 = calcBlock(P_W, cutY, I_W, I_H, false);
       const b2 = calcBlock(P_W, P_H - cutY, I_H, I_W, true);
       b2.y = cutY;
-      update([b1, b2], `Dọc (${r} hàng) + Ngang`);
+      update([b1, b2], `${t('verticalLayout')} (${r} ${t('rowsText')}) + ${t('horizontalLayout')}`);
     }
 
     const maxRowsRot = Math.floor(P_H / I_W);
@@ -147,7 +148,7 @@ const PaperCalculator: React.FC = () => {
       const b1 = calcBlock(P_W, cutY, I_H, I_W, true);
       const b2 = calcBlock(P_W, P_H - cutY, I_W, I_H, false);
       b2.y = cutY;
-      update([b1, b2], `Ngang (${r} hàng) + Dọc`);
+      update([b1, b2], `${t('horizontalLayout')} (${r} ${t('rowsText')}) + ${t('verticalLayout')}`);
     }
 
     return best;
@@ -1219,9 +1220,9 @@ const PaperCalculator: React.FC = () => {
                 </div>
                 {paperPrice > 0 && optimizationResult.total > 0 && (
                   <div className="mt-3 pt-3 border-t border-blue-500/50">
-                    <div className="text-blue-200 text-xs uppercase mb-1">Giá thành phẩm</div>
+                    <div className="text-blue-200 text-xs uppercase mb-1">{t('finishedPrice')}</div>
                     <div className="text-xl font-bold">
-                      {Math.round(paperPrice / optimizationResult.total).toLocaleString('vi-VN')} đ<span className="text-sm font-normal">/con</span>
+                      {Math.round(paperPrice / optimizationResult.total).toLocaleString('vi-VN')} {t('currency')}<span className="text-sm font-normal">/{t('unit')}</span>
                     </div>
                   </div>
                 )}
@@ -1288,13 +1289,13 @@ const PaperCalculator: React.FC = () => {
                       </div>
                       <div className="text-xs text-gray-500 space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-blue-600">Tổng số: {opt.totalYield} con</span>
+                          <span className="font-semibold text-blue-600">{t('totalCount')}: {opt.totalYield} {t('unit')}</span>
                           <span className="text-gray-300">|</span>
-                          <span>Diện tích: {Math.round(opt.area / 100) / 10} cm²</span>
+                          <span>{t('areaLabel')}: {Math.round(opt.area / 100) / 10} cm²</span>
                         </div>
                         {paperPrice > 0 && opt.totalYield > 0 && (
                           <div className="text-emerald-600 font-bold">
-                            Giá: {Math.round(paperPrice / opt.totalYield).toLocaleString('vi-VN')} đ/con
+                            {t('priceLabel')}: {Math.round(paperPrice / opt.totalYield).toLocaleString('vi-VN')} {t('pricePerUnitShort')}
                           </div>
                         )}
                         {opt.wastes.length > 0 && (
@@ -1317,14 +1318,14 @@ const PaperCalculator: React.FC = () => {
                     onClick={() => setVisibleCount(prev => prev + 3)}
                     className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1"
                   >
-                    <ChevronDown className="w-4 h-4" /> Xem thêm {Math.min(3, divisionOptions.length - visibleCount)} phương án
+                    <ChevronDown className="w-4 h-4" /> {t('showMoreOptions')} {Math.min(3, divisionOptions.length - visibleCount)} {t('moreOptionsText')}
                   </button>
                 )}
               </div>
             ) : (
               <div className="text-center text-gray-400 py-8 bg-white rounded-xl border border-dashed border-gray-300">
-                <p>Không tìm thấy phương án phù hợp</p>
-                <p className="text-xs mt-1">(Thử điều chỉnh số lượng hoặc kích thước Min/Max)</p>
+                <p>{t('noMatchingPlan')}</p>
+                <p className="text-xs mt-1">({t('tryAdjusting')})</p>
               </div>
             )}
           </div>
@@ -1333,21 +1334,21 @@ const PaperCalculator: React.FC = () => {
         <div className={`transition-all duration-300 ${showPreview ? 'opacity-100' : 'opacity-0 max-h-0 overflow-hidden'} mt-4 -mx-4`}>
           {/* Header line 1: Title + Legends */}
           <div className="bg-gray-800 px-4 py-2 flex justify-between items-center border-b border-gray-700">
-            <span className="text-sm font-bold text-white uppercase tracking-wider">✂️ Mô phỏng cắt</span>
+            <span className="text-sm font-bold text-white uppercase tracking-wider">{t('cutSimulation')}</span>
             <div className="flex gap-3 text-xs text-gray-300">
               {activeTab === 'optimize' ? (
                 <>
                   {optimizationResult?.blocks && optimizationResult.blocks.length > 1 && (
                     <>
-                      <div className="flex items-center gap-1"><div className="w-3 h-3 bg-blue-500 rounded-sm"></div> Cụm 1</div>
-                      <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> Cụm 2</div>
+                      <div className="flex items-center gap-1"><div className="w-3 h-3 bg-blue-500 rounded-sm"></div> {t('cluster1')}</div>
+                      <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> {t('cluster2')}</div>
                     </>
                   )}
                 </>
               ) : (
                 <>
-                  <div className="flex items-center gap-1"><div className="w-3 h-3 bg-amber-500 rounded-sm"></div> {selectedGrid?.blocks?.length > 1 ? 'Cụm 1' : 'Sản phẩm'}</div>
-                  {selectedGrid?.blocks?.length > 1 && <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> Cụm 2</div>}
+                  <div className="flex items-center gap-1"><div className="w-3 h-3 bg-amber-500 rounded-sm"></div> {selectedGrid?.blocks?.length > 1 ? t('cluster1') : t('productLabel')}</div>
+                  {selectedGrid?.blocks?.length > 1 && <div className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> {t('cluster2')}</div>}
                 </>
               )}
             </div>
@@ -1358,7 +1359,7 @@ const PaperCalculator: React.FC = () => {
               onClick={() => setIsBlinking(!isBlinking)}
               className={`flex items-center gap-1 px-3 py-1 ${isBlinking ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-500 hover:bg-gray-600'} text-white rounded-md text-xs font-medium transition`}
             >
-              {isBlinking ? '⏸ Dừng' : '▶ Chạy'}
+              {isBlinking ? `⏸ ${t('stop')}` : `▶ ${t('play')}`}
             </button>
             <button
               onClick={() => {
@@ -1391,13 +1392,13 @@ const PaperCalculator: React.FC = () => {
               }}
               className="flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium transition"
             >
-              <Printer className="w-3 h-3" /> In
+              <Printer className="w-3 h-3" /> {t('print')}
             </button>
             <button
               onClick={() => setShowCuttingGuide(true)}
               className="flex items-center gap-1 px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-xs font-medium transition"
             >
-              <BookOpen className="w-3 h-3" /> Hướng dẫn
+              <BookOpen className="w-3 h-3" /> {t('guide')}
             </button>
           </div>
           <div className="bg-gray-100 p-1 flex justify-center overflow-hidden">
@@ -1443,10 +1444,10 @@ const PaperCalculator: React.FC = () => {
           }
 
           // Sắp xếp lại theo thứ tự ưu tiên
-          const firstCluster = priorityFirst ? { rows: c1Rows, cols: c1Cols, h: c1HCuts, v: c1VCuts, total: c1Total, label: 'Cụm 1', color: 'blue' }
-            : { rows: c2Rows, cols: c2Cols, h: c2HCuts, v: c2VCuts, total: c2Total, label: 'Cụm 2', color: 'green' };
-          const secondCluster = priorityFirst ? { rows: c2Rows, cols: c2Cols, h: c2HCuts, v: c2VCuts, total: c2Total, label: 'Cụm 2', color: 'green' }
-            : { rows: c1Rows, cols: c1Cols, h: c1HCuts, v: c1VCuts, total: c1Total, label: 'Cụm 1', color: 'blue' };
+          const firstCluster = priorityFirst ? { rows: c1Rows, cols: c1Cols, h: c1HCuts, v: c1VCuts, total: c1Total, label: t('cluster1'), color: 'blue' }
+            : { rows: c2Rows, cols: c2Cols, h: c2HCuts, v: c2VCuts, total: c2Total, label: t('cluster2'), color: 'green' };
+          const secondCluster = priorityFirst ? { rows: c2Rows, cols: c2Cols, h: c2HCuts, v: c2VCuts, total: c2Total, label: t('cluster2'), color: 'green' }
+            : { rows: c1Rows, cols: c1Cols, h: c1HCuts, v: c1VCuts, total: c1Total, label: t('cluster1'), color: 'blue' };
 
           return (
             <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowCuttingGuide(false)}>
@@ -1454,7 +1455,7 @@ const PaperCalculator: React.FC = () => {
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-2xl">
                   <div className="flex justify-between items-center">
                     <h2 className="text-white font-bold text-lg flex items-center gap-2">
-                      <Scissors className="w-5 h-5" /> Hướng dẫn cắt - {totalProducts} sản phẩm
+                      <Scissors className="w-5 h-5" /> {t('cuttingGuideTitle')} - {totalProducts} {t('productsCount')}
                     </h2>
                     <button onClick={() => setShowCuttingGuide(false)} className="text-white/80 hover:text-white">
                       <X className="w-5 h-5" />
@@ -1466,8 +1467,8 @@ const PaperCalculator: React.FC = () => {
                   {/* Thông tin tổng quan */}
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
                     <div className="text-blue-800 text-sm font-medium text-center">
-                      📋 Giấy <strong>{paper.w} x {paper.h}mm</strong> → <strong>{totalProducts}</strong> sản phẩm
-                      {hasTwoClusters && <span className="text-blue-600"> (2 cụm)</span>}
+                      📋 {t('paperInfo')} <strong>{paper.w} x {paper.h}mm</strong> → <strong>{totalProducts}</strong> {t('productsCount')}
+                      {hasTwoClusters && <span className="text-blue-600"> ({t('twoClusters')})</span>}
                     </div>
                   </div>
 
@@ -1476,7 +1477,7 @@ const PaperCalculator: React.FC = () => {
                     <div className="border border-red-200 rounded-xl p-4 bg-red-50">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
-                        <h3 className="font-bold text-gray-800">Cắt chia 2 cụm</h3>
+                        <h3 className="font-bold text-gray-800">{t('cutDivideClusters')}</h3>
                       </div>
                       <div className="bg-white p-3 rounded-lg border border-gray-200 mb-2">
                         <div className="flex items-center justify-center gap-3">
@@ -1495,7 +1496,7 @@ const PaperCalculator: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <p className="text-gray-600 text-sm">Cắt 1 đường để tách 2 cụm. <span className="text-blue-600 font-semibold">⭐ = Ưu tiên cắt trước</span></p>
+                      <p className="text-gray-600 text-sm">{t('cutOneLine')}. <span className="text-blue-600 font-semibold">⭐ = {t('priorityCut')}</span></p>
                     </div>
                   )}
 
@@ -1504,12 +1505,12 @@ const PaperCalculator: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                       <div className={`w-8 h-8 ${firstCluster.color === 'blue' ? 'bg-blue-500' : 'bg-green-500'} text-white rounded-full flex items-center justify-center font-bold text-sm`}>{hasTwoClusters ? 2 : 1}</div>
                       <h3 className="font-bold text-gray-800">
-                        {hasTwoClusters ? `${firstCluster.label} (⭐ ưu tiên)` : 'Cắt sản phẩm'}
+                        {hasTwoClusters ? `${firstCluster.label} (⭐ ${t('priorityLabel')})` : t('cutProducts')}
                       </h3>
                     </div>
                     <div className="bg-white p-3 rounded-lg border border-gray-200 mb-2">
                       <div className="text-center text-xs text-gray-500 mb-2">
-                        <strong>{firstCluster.rows} hàng × {firstCluster.cols} cột = {firstCluster.total} sản phẩm</strong>
+                        <strong>{firstCluster.rows} {t('rowsLabel')} × {firstCluster.cols} {t('colsLabel')} = {firstCluster.total} {t('productsCount')}</strong>
                       </div>
                       <div className="flex flex-wrap justify-center gap-1 max-w-[200px] mx-auto">
                         {Array.from({ length: Math.min(firstCluster.total, 12) }).map((_, i) => (
@@ -1520,16 +1521,16 @@ const PaperCalculator: React.FC = () => {
                         {firstCluster.total > 12 && <div className="w-7 h-9 flex items-center justify-center text-xs text-gray-400">...</div>}
                       </div>
                       <div className="text-center mt-2 text-xs text-green-600 font-bold">
-                        ✓ {firstCluster.h} đường H + {firstCluster.v} đường V = {firstCluster.total} sản phẩm
+                        ✓ {firstCluster.h} {t('hLinesShort')} + {firstCluster.v} {t('vLinesShort')} = {firstCluster.total} {t('productsCount')}
                       </div>
                       {hasTwoClusters && (
                         <div className="text-center mt-1 text-xs text-amber-600">
-                          💡 min({firstCluster.h},{firstCluster.v}) = {Math.min(firstCluster.h, firstCluster.v)} → Ra thành phẩm sớm nhất!
+                          💡 {t('minCutFormula')}({firstCluster.h},{firstCluster.v}) = {Math.min(firstCluster.h, firstCluster.v)} → {t('fastestProduct')}
                         </div>
                       )}
                     </div>
                     <p className="text-gray-600 text-sm">
-                      Cắt <strong>{firstCluster.h} đường ngang</strong> rồi <strong>{firstCluster.v} đường dọc</strong>
+                      {t('cut')} <strong>{firstCluster.h} {t('hLines')}</strong> {t('cutThen')} <strong>{firstCluster.v} {t('vLines')}</strong>
                     </p>
                   </div>
 
@@ -1542,7 +1543,7 @@ const PaperCalculator: React.FC = () => {
                       </div>
                       <div className="bg-white p-3 rounded-lg border border-gray-200 mb-2">
                         <div className="text-center text-xs text-gray-500 mb-2">
-                          <strong>{secondCluster.rows} hàng × {secondCluster.cols} cột = {secondCluster.total} sản phẩm</strong>
+                          <strong>{secondCluster.rows} {t('rowsLabel')} × {secondCluster.cols} {t('colsLabel')} = {secondCluster.total} {t('productsCount')}</strong>
                         </div>
                         <div className="flex flex-wrap justify-center gap-1 max-w-[180px] mx-auto">
                           {Array.from({ length: Math.min(secondCluster.total, 9) }).map((_, i) => (
@@ -1553,34 +1554,34 @@ const PaperCalculator: React.FC = () => {
                           {secondCluster.total > 9 && <div className="w-7 h-8 flex items-center justify-center text-xs text-gray-400">...</div>}
                         </div>
                         <div className="text-center mt-2 text-xs text-blue-600">
-                          → {secondCluster.h} đường H + {secondCluster.v} đường V = {secondCluster.total} sản phẩm
+                          → {secondCluster.h} {t('hLinesShort')} + {secondCluster.v} {t('vLinesShort')} = {secondCluster.total} {t('productsCount')}
                         </div>
                       </div>
                       <p className="text-gray-600 text-sm">
-                        Cắt <strong>{secondCluster.h} đường ngang</strong> rồi <strong>{secondCluster.v} đường dọc</strong>
+                        {t('cut')} <strong>{secondCluster.h} {t('hLines')}</strong> {t('cutThen')} <strong>{secondCluster.v} {t('vLines')}</strong>
                       </p>
                     </div>
                   )}
 
                   {/* Tổng kết đường cắt */}
                   <div className="bg-gray-100 border border-gray-300 rounded-xl p-3">
-                    <div className="text-gray-800 font-bold text-sm mb-1">📊 Tổng kết:</div>
+                    <div className="text-gray-800 font-bold text-sm mb-1">📊 {t('summaryTitle')}:</div>
                     <div className="text-gray-700 text-sm">
-                      • Tổng đường cắt: <strong>{(hasTwoClusters ? 1 : 0) + firstCluster.h + firstCluster.v + (hasTwoClusters ? secondCluster.h + secondCluster.v : 0)}</strong> đường
+                      • {t('totalCutLines')}: <strong>{(hasTwoClusters ? 1 : 0) + firstCluster.h + firstCluster.v + (hasTwoClusters ? secondCluster.h + secondCluster.v : 0)}</strong> {t('linesUnit')}
                       <br />
-                      • Tổng sản phẩm: <strong>{totalProducts}</strong> sản phẩm
+                      • {t('totalProductsLabel')}: <strong>{totalProducts}</strong> {t('productsCount')}
                     </div>
                   </div>
 
                   {/* Tips */}
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                     <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
-                      💡 Mẹo cắt nhanh
+                      💡 {t('quickCuttingTips')}
                     </h4>
                     <ul className="text-amber-700 text-sm space-y-1">
-                      <li>• Xếp chồng nhiều tờ để cắt 1 lần</li>
-                      <li>• Chiều dài máy xén: <strong>{cutterMaxLength}mm</strong></li>
-                      <li>• Đường cắt từ mép → bao gồm phần thừa</li>
+                      <li>• {t('tipStackSheets')}</li>
+                      <li>• {t('tipCutterLength')}: <strong>{cutterMaxLength}mm</strong></li>
+                      <li>• {t('tipEdgeCut')}</li>
                     </ul>
                   </div>
 
@@ -1588,7 +1589,7 @@ const PaperCalculator: React.FC = () => {
                     onClick={() => setShowCuttingGuide(false)}
                     className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition"
                   >
-                    Đã hiểu, đóng
+                    {t('understood')}
                   </button>
                 </div>
               </div>
@@ -1626,20 +1627,20 @@ const AppContent: React.FC = () => {
       case 'home':
         return (
           <div className="p-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            {/* Language Selector */}
-            <div className="flex justify-end mb-2">
-              <div className="flex items-center gap-1 bg-slate-900/80 rounded-full p-1">
+            {/* Language Selector - Centered and bigger */}
+            <div className="flex justify-center mb-4">
+              <div className="flex items-center gap-2 bg-slate-800/90 rounded-xl p-2 border border-slate-700">
                 <button
                   onClick={() => setLang('vi')}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${lang === 'vi' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${lang === 'vi' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
                 >
-                  VI
+                  🇻🇳 Tiếng Việt
                 </button>
                 <button
                   onClick={() => setLang('en')}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${lang === 'en' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${lang === 'en' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
                 >
-                  EN
+                  🇬🇧 English
                 </button>
               </div>
             </div>
@@ -1688,6 +1689,22 @@ const AppContent: React.FC = () => {
                   <p className="text-slate-500 text-[10px] mt-1">{t('materialCalcSub')}</p>
                 </div>
               </button>
+
+              {/* Menu Item 4: Download Tool */}
+              <a
+                href="https://download.goxprint.com/goxprint.exe"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-slate-900/60 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-800/80 p-5 rounded-2xl flex flex-col items-center justify-center text-center space-y-3 group transition-all duration-200 active:scale-95 shadow-lg"
+              >
+                <div className="w-14 h-14 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-400 group-hover:text-amber-300 group-hover:bg-amber-500/20 transition-colors">
+                  <Download size={28} />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold text-sm">{t('downloadTool')}</h3>
+                  <p className="text-slate-500 text-[10px] mt-1">{t('downloadToolSub')}</p>
+                </div>
+              </a>
 
             </div>
 

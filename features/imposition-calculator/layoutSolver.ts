@@ -22,6 +22,15 @@ export interface LayoutConfig {
     printH: number;
     pageW: number;
     pageH: number;
+    translations?: {
+        straightLayout: string;
+        honeycombLayout: string;
+        honeycombDesc: string;
+        landscapeLayout: string;
+        cols: string;
+        rows: string;
+        rotated: string;
+    };
 }
 
 /**
@@ -30,7 +39,18 @@ export interface LayoutConfig {
  * @returns Mảng các phương án xếp hình
  */
 export function calculateLayout(config: LayoutConfig): LayoutPlan[] {
-    const { itemW, itemH, padding, printW, printH, pageW, pageH, shape } = config;
+    const { itemW, itemH, padding, printW, printH, pageW, pageH, shape, translations } = config;
+
+    // Default translations (Vietnamese)
+    const t = translations || {
+        straightLayout: 'Xếp thẳng',
+        honeycombLayout: 'Xếp sole (tối ưu)',
+        honeycombDesc: 'Xếp kiểu tổ ong, ~15% hiệu quả hơn',
+        landscapeLayout: 'Tất cả ngang',
+        cols: 'cột',
+        rows: 'hàng',
+        rotated: 'xoay'
+    };
 
     if (itemW <= 0 || itemH <= 0 || printW <= 0 || printH <= 0) {
         return [];
@@ -128,10 +148,10 @@ export function calculateLayout(config: LayoutConfig): LayoutPlan[] {
     const rowsP = Math.floor(printH / cellH);
     if (colsP > 0 && rowsP > 0) {
         plans.push({
-            name: 'Xếp thẳng',
+            name: t.straightLayout,
             qty: colsP * rowsP,
             items: createGrid(colsP, rowsP, false, itemW, effectiveItemH),
-            description: `${colsP} cột × ${rowsP} hàng`
+            description: `${colsP} ${t.cols} × ${rowsP} ${t.rows}`
         });
     }
 
@@ -140,10 +160,10 @@ export function calculateLayout(config: LayoutConfig): LayoutPlan[] {
         const honeycombItems = createHoneycombGrid(itemW);
         if (honeycombItems.length > 0) {
             plans.push({
-                name: 'Xếp sole (tối ưu)',
+                name: t.honeycombLayout,
                 qty: honeycombItems.length,
                 items: honeycombItems,
-                description: `Xếp kiểu tổ ong, ~15% hiệu quả hơn`
+                description: t.honeycombDesc
             });
         }
     }
@@ -156,10 +176,10 @@ export function calculateLayout(config: LayoutConfig): LayoutPlan[] {
             const qtyL = colsL * rowsL;
             if (qtyL !== colsP * rowsP) {
                 plans.push({
-                    name: 'Tất cả ngang',
+                    name: t.landscapeLayout,
                     qty: qtyL,
                     items: createGrid(colsL, rowsL, true, effectiveItemH, itemW),
-                    description: `${colsL} cột × ${rowsL} hàng (xoay)`
+                    description: `${colsL} ${t.cols} × ${rowsL} ${t.rows} (${t.rotated})`
                 });
             }
         }

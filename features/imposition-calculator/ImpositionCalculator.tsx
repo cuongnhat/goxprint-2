@@ -70,7 +70,16 @@ const ImpositionCalculator: React.FC = () => {
                 printW: effectivePrintW,
                 printH: effectivePrintH,
                 pageW,
-                pageH
+                pageH,
+                translations: {
+                    straightLayout: t('straightLayout'),
+                    honeycombLayout: t('honeycombLayout'),
+                    honeycombDesc: t('honeycombDesc'),
+                    landscapeLayout: t('landscapeLayout'),
+                    cols: t('cols'),
+                    rows: t('rows'),
+                    rotated: t('rotated')
+                }
             });
             setPlans(result);
             if (currentPlanIndex >= result.length) {
@@ -78,7 +87,7 @@ const ImpositionCalculator: React.FC = () => {
             }
         }, 200);
         return () => clearTimeout(timer);
-    }, [shape, itemW, itemH, padding, printW, printH, pageW, pageH, usePrintArea]);
+    }, [shape, itemW, itemH, padding, printW, printH, pageW, pageH, usePrintArea, t]);
 
     // Draw canvas preview
     useEffect(() => {

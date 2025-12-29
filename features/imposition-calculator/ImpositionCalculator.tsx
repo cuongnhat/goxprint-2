@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import {
     Calculator,
     RefreshCw,
@@ -12,7 +13,9 @@ import {
     Circle,
     RectangleHorizontal,
     Grid3X3,
-    Check
+    Check,
+    RotateCcw,
+    HelpCircle
 } from 'lucide-react';
 import NumberInput from '../../components/NumberInput';
 import { calculateLayout, LayoutPlan } from './layoutSolver';
@@ -30,22 +33,47 @@ const PAPER_PRESETS = [
 const ImpositionCalculator: React.FC = () => {
     const { t } = useI18n();
 
+    // Default values for reset
+    const defaults = {
+        shape: 'rect' as 'rect' | 'circle' | 'oval',
+        itemW: 100,
+        itemH: 120,
+        padding: 0,
+        pageW: 330,
+        pageH: 480,
+        printW: 310,
+        printH: 450,
+        usePrintArea: false,
+        totalOrder: 1000,
+        unitPrice: 10000
+    };
+
+    // Load from localStorage or use defaults
+    const loadState = <T,>(key: string, defaultValue: T): T => {
+        try {
+            const saved = localStorage.getItem(`impCalc_${key}`);
+            return saved ? JSON.parse(saved) : defaultValue;
+        } catch {
+            return defaultValue;
+        }
+    };
+
     // Config state
-    const [shape, setShape] = useState<'rect' | 'circle' | 'oval'>('rect');
-    const [itemW, setItemW] = useState(100);
-    const [itemH, setItemH] = useState(120);
-    const [padding, setPadding] = useState(0);
+    const [shape, setShape] = useState<'rect' | 'circle' | 'oval'>(() => loadState('shape', defaults.shape));
+    const [itemW, setItemW] = useState(() => loadState('itemW', defaults.itemW));
+    const [itemH, setItemH] = useState(() => loadState('itemH', defaults.itemH));
+    const [padding, setPadding] = useState(() => loadState('padding', defaults.padding));
 
     // Page settings
-    const [pageW, setPageW] = useState(330);
-    const [pageH, setPageH] = useState(480);
-    const [printW, setPrintW] = useState(310);
-    const [printH, setPrintH] = useState(450);
-    const [usePrintArea, setUsePrintArea] = useState(false); // Mặc định tắt
+    const [pageW, setPageW] = useState(() => loadState('pageW', defaults.pageW));
+    const [pageH, setPageH] = useState(() => loadState('pageH', defaults.pageH));
+    const [printW, setPrintW] = useState(() => loadState('printW', defaults.printW));
+    const [printH, setPrintH] = useState(() => loadState('printH', defaults.printH));
+    const [usePrintArea, setUsePrintArea] = useState(() => loadState('usePrintArea', defaults.usePrintArea));
 
     // Order & Pricing
-    const [totalOrder, setTotalOrder] = useState(1000);
-    const [unitPrice, setUnitPrice] = useState(10000);
+    const [totalOrder, setTotalOrder] = useState(() => loadState('totalOrder', defaults.totalOrder));
+    const [unitPrice, setUnitPrice] = useState(() => loadState('unitPrice', defaults.unitPrice));
 
     // Results
     const [plans, setPlans] = useState<LayoutPlan[]>([]);
@@ -54,6 +82,124 @@ const ImpositionCalculator: React.FC = () => {
     const [showPlanModal, setShowPlanModal] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    // Save to localStorage when inputs change
+    useEffect(() => { localStorage.setItem('impCalc_shape', JSON.stringify(shape)); }, [shape]);
+    useEffect(() => { localStorage.setItem('impCalc_itemW', JSON.stringify(itemW)); }, [itemW]);
+    useEffect(() => { localStorage.setItem('impCalc_itemH', JSON.stringify(itemH)); }, [itemH]);
+    useEffect(() => { localStorage.setItem('impCalc_padding', JSON.stringify(padding)); }, [padding]);
+    useEffect(() => { localStorage.setItem('impCalc_pageW', JSON.stringify(pageW)); }, [pageW]);
+    useEffect(() => { localStorage.setItem('impCalc_pageH', JSON.stringify(pageH)); }, [pageH]);
+    useEffect(() => { localStorage.setItem('impCalc_printW', JSON.stringify(printW)); }, [printW]);
+    useEffect(() => { localStorage.setItem('impCalc_printH', JSON.stringify(printH)); }, [printH]);
+    useEffect(() => { localStorage.setItem('impCalc_usePrintArea', JSON.stringify(usePrintArea)); }, [usePrintArea]);
+    useEffect(() => { localStorage.setItem('impCalc_totalOrder', JSON.stringify(totalOrder)); }, [totalOrder]);
+    useEffect(() => { localStorage.setItem('impCalc_unitPrice', JSON.stringify(unitPrice)); }, [unitPrice]);
+
+    // Reset function
+    const handleReset = () => {
+        setShape(defaults.shape);
+        setItemW(defaults.itemW);
+        setItemH(defaults.itemH);
+        setPadding(defaults.padding);
+        setPageW(defaults.pageW);
+        setPageH(defaults.pageH);
+        setPrintW(defaults.printW);
+        setPrintH(defaults.printH);
+        setUsePrintArea(defaults.usePrintArea);
+        setTotalOrder(defaults.totalOrder);
+        setUnitPrice(defaults.unitPrice);
+        setCurrentPlanIndex(0);
+    };
+
+    // Tour state - auto-start for first-time visitors
+    const [runTour, setRunTour] = useState(() => {
+        const hasSeenTour = localStorage.getItem('impCalc_tourSeen');
+        return !hasSeenTour;
+    });
+    const [tourStepIndex, setTourStepIndex] = useState(0);
+    const [countdown, setCountdown] = useState(5);
+    const TOUR_DELAY = 5;
+
+    const tourContents = [
+        t('tourImpWelcome'),
+        t('tourImpShape'),
+        t('tourImpItemSize'),
+        t('tourImpPadding'),
+        t('tourImpPaperPreset'),
+        t('tourImpPaperSize'),
+        t('tourImpLayout'),
+        t('tourImpPreview'),
+        t('tourImpOrder'),
+        t('tourImpResult'),
+    ];
+
+    const tourSteps: Step[] = [
+        { target: 'body', content: '', placement: 'center' as const, disableBeacon: true },
+        { target: '#shape-section', content: '', placement: 'bottom' as const },
+        { target: '#item-size-section', content: '', placement: 'bottom' as const },
+        { target: '#padding-section', content: '', placement: 'bottom' as const },
+        { target: '#paper-preset-section', content: '', placement: 'bottom' as const },
+        { target: '#paper-size-section', content: '', placement: 'bottom' as const },
+        { target: '#layout-section', content: '', placement: 'bottom' as const },
+        { target: '#preview-section', content: '', placement: 'top' as const },
+        { target: '#order-section', content: '', placement: 'top' as const },
+        { target: '#result-section', content: '', placement: 'top' as const },
+    ].map((step, idx) => ({
+        ...step,
+        content: (
+            <div>
+                <div>{tourContents[idx]}</div>
+                <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                    <span className="inline-block w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin"></span>
+                    {countdown}s
+                </div>
+            </div>
+        ),
+    }));
+
+    // Countdown timer
+    useEffect(() => {
+        if (!runTour) return;
+
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    if (tourStepIndex < tourContents.length - 1) {
+                        setTourStepIndex(i => i + 1);
+                    } else {
+                        setRunTour(false);
+                        localStorage.setItem('impCalc_tourSeen', 'true');
+                    }
+                    return TOUR_DELAY;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [runTour, tourStepIndex, tourContents.length]);
+
+    const handleTourCallback = (data: CallBackProps) => {
+        const { status, action, index, type } = data;
+
+        if (type === 'step:after') {
+            if (action === 'next') {
+                setTourStepIndex(index + 1);
+                setCountdown(TOUR_DELAY);
+            } else if (action === 'prev') {
+                setTourStepIndex(index - 1);
+                setCountdown(TOUR_DELAY);
+            }
+        }
+
+        if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+            setRunTour(false);
+            setTourStepIndex(0);
+            setCountdown(TOUR_DELAY);
+            localStorage.setItem('impCalc_tourSeen', 'true');
+        }
+    };
 
     // Calculate layout khi config thay đổi
     useEffect(() => {
@@ -221,6 +367,33 @@ const ImpositionCalculator: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-white text-gray-800 font-sans pb-28">
+            {/* Joyride Tour */}
+            <Joyride
+                steps={tourSteps}
+                run={runTour}
+                stepIndex={tourStepIndex}
+                continuous
+                showProgress
+                showSkipButton
+                callback={handleTourCallback}
+                locale={{
+                    back: t('tourBack'),
+                    close: t('close'),
+                    last: t('tourFinish'),
+                    next: t('tourNext'),
+                    skip: t('tourSkip'),
+                }}
+                styles={{
+                    options: {
+                        primaryColor: '#9333ea',
+                        zIndex: 10000,
+                    },
+                    tooltip: {
+                        borderRadius: 12,
+                    },
+                }}
+            />
+
             {/* Header */}
             <div className="bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
                 <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -229,14 +402,21 @@ const ImpositionCalculator: React.FC = () => {
                     </div>
                     {t('impTitle')}
                 </h1>
-                <div className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md">{t('version')}</div>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => { setTourStepIndex(0); setCountdown(TOUR_DELAY); setRunTour(true); }} className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-600 transition" title={t('startTour')}>
+                        <HelpCircle className="w-5 h-5" />
+                    </button>
+                    <button onClick={handleReset} className="p-2 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 transition" title={t('reset')}>
+                        <RotateCcw className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
 
             <div className="max-w-md mx-auto px-4 pt-6">
                 <div className="space-y-6">
 
                     {/* Shape Selector */}
-                    <section className="space-y-3">
+                    <section id="shape-section" className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
                             <Box className="w-3 h-3" /> {t('shapeLabel')}
                         </h3>
@@ -263,7 +443,7 @@ const ImpositionCalculator: React.FC = () => {
 
 
                     {/* Item Dimensions */}
-                    <section className="space-y-3">
+                    <section id="item-size-section" className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">
                             {t('productSize')}
                         </h3>
@@ -292,13 +472,13 @@ const ImpositionCalculator: React.FC = () => {
                     </section>
 
                     {/* Page Settings */}
-                    <section className="space-y-3">
+                    <section id="paper-size-section" className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
                             <Grid3X3 className="w-3 h-3" /> {t('paperSize')}
                         </h3>
 
                         {/* Presets */}
-                        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+                        <div id="paper-preset-section" className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
                             {PAPER_PRESETS.map(preset => (
                                 <button
                                     key={preset.label}
@@ -352,7 +532,7 @@ const ImpositionCalculator: React.FC = () => {
                     </section>
 
                     {/* Order & Price */}
-                    <section className="space-y-3">
+                    <section id="order-section" className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
                             <Calculator className="w-3 h-3" /> {t('orderPrice')}
                         </h3>
@@ -374,7 +554,7 @@ const ImpositionCalculator: React.FC = () => {
 
                     {/* Results Summary */}
                     {currentPlan && (
-                        <div className="sticky bottom-0 left-0 right-0 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-lg z-40">
+                        <div id="result-section" className="sticky bottom-0 left-0 right-0 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-lg z-40">
                             <div className="grid grid-cols-4 gap-2 items-center text-center">
                                 <div>
                                     <div className="text-[10px] text-gray-400 font-semibold uppercase">{t('itemsPerSheet')}</div>
@@ -398,7 +578,7 @@ const ImpositionCalculator: React.FC = () => {
 
                     {/* Plan Selector & Preview */}
                     {currentPlan ? (
-                        <section className="pt-2 space-y-3">
+                        <section id="layout-section" className="pt-2 space-y-3">
                             {/* Select Plan Button */}
                             <button
                                 onClick={() => setShowPlanModal(true)}
@@ -419,7 +599,7 @@ const ImpositionCalculator: React.FC = () => {
                             </button>
 
                             {/* Preview */}
-                            <div className="bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
+                            <div id="preview-section" className="bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
                                 <div
                                     className="px-4 py-3 flex justify-between items-center bg-gray-50 border-b border-gray-200 cursor-pointer select-none"
                                     onClick={() => setShowPreview(!showPreview)}

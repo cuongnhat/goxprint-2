@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 
 // Lazy load logo to prevent animation running when not on Home screen
 const GoXPrintLogo = lazy(() => import('./components/GoXPrintLogo'));
@@ -38,7 +39,8 @@ import {
   CheckCircle,
   Printer,
   BookOpen,
-  Download
+  Download,
+  HelpCircle
 } from 'lucide-react';
 
 // ==========================================
@@ -49,18 +51,39 @@ const PaperCalculator: React.FC = () => {
   const [activeTab, setActiveTab] = useState('optimize');
   const [showPreview, setShowPreview] = useState(true);
 
+  // Default values for reset
+  const defaults = {
+    paper: { w: 790, h: 1090 },
+    paperPrice: 0,
+    cutterMaxLength: 1000,
+    item: { w: 210, h: 297 },
+    targetQuantity: 11,
+    minSize: { w: 200, h: 200 },
+    maxSize: { w: 330, h: 0 }
+  };
+
+  // Load from localStorage or use defaults
+  const loadState = <T,>(key: string, defaultValue: T): T => {
+    try {
+      const saved = localStorage.getItem(`paperCalc_${key}`);
+      return saved ? JSON.parse(saved) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  };
+
   // --- Global Inputs ---
-  const [paper, setPaper] = useState({ w: 790, h: 1090 });
-  const [paperPrice, setPaperPrice] = useState(0); // Giá tiền giấy lớn
-  const [cutterMaxLength, setCutterMaxLength] = useState(800); // Chiều dài tối đa máy xén (mm)
+  const [paper, setPaper] = useState(() => loadState('paper', defaults.paper));
+  const [paperPrice, setPaperPrice] = useState(() => loadState('paperPrice', defaults.paperPrice));
+  const [cutterMaxLength, setCutterMaxLength] = useState(() => loadState('cutterMaxLength', defaults.cutterMaxLength));
 
   // --- Tab 1: Optimize Inputs ---
-  const [item, setItem] = useState({ w: 210, h: 297 });
+  const [item, setItem] = useState(() => loadState('item', defaults.item));
 
   // --- Tab 2: Divide Inputs ---
-  const [targetQuantity, setTargetQuantity] = useState(11);
-  const [minSize, setMinSize] = useState({ w: 200, h: 200 });
-  const [maxSize, setMaxSize] = useState({ w: 330, h: 0 });
+  const [targetQuantity, setTargetQuantity] = useState(() => loadState('targetQuantity', defaults.targetQuantity));
+  const [minSize, setMinSize] = useState(() => loadState('minSize', defaults.minSize));
+  const [maxSize, setMaxSize] = useState(() => loadState('maxSize', defaults.maxSize));
   const [selectedGrid, setSelectedGrid] = useState<any>(null);
 
   // Pagination State
@@ -81,6 +104,119 @@ const PaperCalculator: React.FC = () => {
 
   // Cutting guide lightbox
   const [showCuttingGuide, setShowCuttingGuide] = useState(false);
+
+  // Save to localStorage when inputs change
+  useEffect(() => { localStorage.setItem('paperCalc_paper', JSON.stringify(paper)); }, [paper]);
+  useEffect(() => { localStorage.setItem('paperCalc_paperPrice', JSON.stringify(paperPrice)); }, [paperPrice]);
+  useEffect(() => { localStorage.setItem('paperCalc_cutterMaxLength', JSON.stringify(cutterMaxLength)); }, [cutterMaxLength]);
+  useEffect(() => { localStorage.setItem('paperCalc_item', JSON.stringify(item)); }, [item]);
+  useEffect(() => { localStorage.setItem('paperCalc_targetQuantity', JSON.stringify(targetQuantity)); }, [targetQuantity]);
+  useEffect(() => { localStorage.setItem('paperCalc_minSize', JSON.stringify(minSize)); }, [minSize]);
+  useEffect(() => { localStorage.setItem('paperCalc_maxSize', JSON.stringify(maxSize)); }, [maxSize]);
+
+  // Reset function
+  const handleReset = () => {
+    setPaper(defaults.paper);
+    setPaperPrice(defaults.paperPrice);
+    setCutterMaxLength(defaults.cutterMaxLength);
+    setItem(defaults.item);
+    setTargetQuantity(defaults.targetQuantity);
+    setMinSize(defaults.minSize);
+    setMaxSize(defaults.maxSize);
+    setSelectedGrid(null);
+    setOptimizationResult(null);
+    setDivisionOptions([]);
+    setVisibleCount(3);
+  };
+
+  // Tour state - auto-start for first-time visitors
+  const [runTour, setRunTour] = useState(() => {
+    const hasSeenTour = localStorage.getItem('paperCalc_tourSeen');
+    return !hasSeenTour; // Auto-start if not seen before
+  });
+  const [tourStepIndex, setTourStepIndex] = useState(0);
+  const [countdown, setCountdown] = useState(5);
+  const TOUR_DELAY = 5; // seconds per step
+
+  const tourContents = [
+    t('tourPaperWelcome'),
+    t('tourPaperSize'),
+    t('tourPaperPrice'),
+    t('tourCutterMax'),
+    t('tourTabs'),
+    t('tourItemSize'),
+    activeTab === 'optimize' ? t('tourOptResult') : t('tourDivideResult'),
+    t('tourPreview'),
+    t('tourResetBtn'),
+  ];
+
+  const tourSteps: Step[] = [
+    { target: 'body', content: '', placement: 'center' as const, disableBeacon: true },
+    { target: '#paper-size-section', content: '', placement: 'bottom' as const },
+    { target: '#paper-price-input', content: '', placement: 'bottom' as const },
+    { target: '#cutter-max-input', content: '', placement: 'bottom' as const },
+    { target: '#calc-tabs', content: '', placement: 'bottom' as const },
+    { target: '#item-size-section', content: '', placement: 'bottom' as const },
+    { target: '#result-section', content: '', placement: 'top' as const },
+    { target: '#preview-canvas', content: '', placement: 'top' as const },
+    { target: '#reset-btn', content: '', placement: 'bottom' as const },
+  ].map((step, idx) => ({
+    ...step,
+    content: (
+      <div>
+        <div>{tourContents[idx]}</div>
+        <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+          <span className="inline-block w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></span>
+          {countdown}s
+        </div>
+      </div>
+    ),
+  }));
+
+  // Countdown timer - ticks every second
+  useEffect(() => {
+    if (!runTour) return;
+
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          // Move to next step
+          if (tourStepIndex < tourContents.length - 1) {
+            setTourStepIndex(i => i + 1);
+          } else {
+            setRunTour(false);
+            localStorage.setItem('paperCalc_tourSeen', 'true');
+          }
+          return TOUR_DELAY;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [runTour, tourStepIndex, tourContents.length]);
+
+  const handleTourCallback = (data: CallBackProps) => {
+    const { status, action, index, type } = data;
+
+    // Handle manual navigation
+    if (type === 'step:after') {
+      if (action === 'next') {
+        setTourStepIndex(index + 1);
+        setCountdown(TOUR_DELAY);
+      } else if (action === 'prev') {
+        setTourStepIndex(index - 1);
+        setCountdown(TOUR_DELAY);
+      }
+    }
+
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      setRunTour(false);
+      setTourStepIndex(0);
+      setCountdown(TOUR_DELAY);
+      localStorage.setItem('paperCalc_tourSeen', 'true');
+    }
+  };
 
   // ==========================================
   // CORE ALGORITHM
@@ -1132,20 +1268,55 @@ const PaperCalculator: React.FC = () => {
 
   return (
     <div className="bg-gray-50 text-gray-800 font-sans pb-10 min-h-full">
+      {/* Joyride Tour */}
+      <Joyride
+        steps={tourSteps}
+        run={runTour}
+        stepIndex={tourStepIndex}
+        continuous
+        showProgress
+        showSkipButton
+        callback={handleTourCallback}
+        locale={{
+          back: t('tourBack'),
+          close: t('close'),
+          last: t('tourFinish'),
+          next: t('tourNext'),
+          skip: t('tourSkip'),
+        }}
+        styles={{
+          options: {
+            primaryColor: '#3b82f6',
+            zIndex: 10000,
+          },
+          tooltip: {
+            borderRadius: 12,
+          },
+        }}
+      />
+
       <div className="bg-white shadow-sm sticky top-0 z-20">
         <div className="flex items-center justify-between px-4 py-3">
           <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <Box className="w-5 h-5 text-blue-600" />
             {t('paperCalcTitle')}
           </h1>
-          <button onClick={() => setShowPreview(!showPreview)} className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition">
-            {showPreview ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setTourStepIndex(0); setCountdown(TOUR_DELAY); setRunTour(true); }} className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition" title={t('startTour')}>
+              <HelpCircle className="w-5 h-5" />
+            </button>
+            <button id="reset-btn" onClick={handleReset} className="p-2 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 transition" title={t('reset')}>
+              <RotateCcw className="w-5 h-5" />
+            </button>
+            <button onClick={() => setShowPreview(!showPreview)} className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition">
+              {showPreview ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="px-4 pt-4">
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
+        <div id="paper-size-section" className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
           <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 uppercase tracking-wide">
             <Maximize className="w-4 h-4" /> {t('bigPaperSize')} (mm)
           </div>
@@ -1156,7 +1327,7 @@ const PaperCalculator: React.FC = () => {
 
           <div className="pt-3 border-t border-gray-100">
             <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
+              <div id="paper-price-input" className="relative">
                 <label className="block text-xs text-gray-500 mb-1 flex items-center gap-1">
                   <DollarSign className="w-3 h-3" /> {t('bigPaperPrice')}
                 </label>
@@ -1168,7 +1339,7 @@ const PaperCalculator: React.FC = () => {
                   className="text-emerald-600"
                 />
               </div>
-              <div className="relative">
+              <div id="cutter-max-input" className="relative">
                 <label className="block text-xs text-gray-500 mb-1 flex items-center gap-1">
                   <Scissors className="w-3 h-3" /> {t('cutterMaxLabel')}
                 </label>
@@ -1184,7 +1355,7 @@ const PaperCalculator: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex p-1 bg-gray-200 rounded-lg mb-4">
+        <div id="calc-tabs" className="flex p-1 bg-gray-200 rounded-lg mb-4">
           <button className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'optimize' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`} onClick={() => setActiveTab('optimize')}>
             {t('tabOptimizeSize')}
           </button>
@@ -1195,7 +1366,7 @@ const PaperCalculator: React.FC = () => {
 
         {activeTab === 'optimize' && (
           <div className="animate-in fade-in duration-300">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
+            <div id="item-size-section" className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
               <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase"><Settings className="w-4 h-4" /> {t('productMM')}</div>
                 <button onClick={() => setItem({ w: item.h, h: item.w })} className="text-xs flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100"><RotateCcw className="w-3 h-3" /> {t('swapDimension')}</button>
@@ -1212,7 +1383,7 @@ const PaperCalculator: React.FC = () => {
                 <div className="text-blue-600 font-medium">{t('calculating')}</div>
               </div>
             ) : optimizationResult && !optimizationResult.error ? (
-              <div className="bg-blue-600 text-white p-5 rounded-xl shadow-lg mb-4 text-center">
+              <div id="result-section" className="bg-blue-600 text-white p-5 rounded-xl shadow-lg mb-4 text-center">
                 <div className="text-blue-100 text-xs uppercase font-bold tracking-wider mb-1">{t('maxQty')}</div>
                 <div className="text-5xl font-bold mb-2">{optimizationResult.total} <span className="text-xl font-normal">{t('unit')}</span></div>
                 <div className="flex justify-center gap-4 text-sm text-blue-100 border-t border-blue-500 pt-2 mt-2">
@@ -1331,7 +1502,7 @@ const PaperCalculator: React.FC = () => {
           </div>
         )}
 
-        <div className={`transition-all duration-300 ${showPreview ? 'opacity-100' : 'opacity-0 max-h-0 overflow-hidden'} mt-4 -mx-4`}>
+        <div id="preview-canvas" className={`transition-all duration-300 ${showPreview ? 'opacity-100' : 'opacity-0 max-h-0 overflow-hidden'} mt-4 -mx-4`}>
           {/* Header line 1: Title + Legends */}
           <div className="bg-gray-800 px-4 py-2 flex justify-between items-center border-b border-gray-700">
             <span className="text-sm font-bold text-white uppercase tracking-wider">{t('cutSimulation')}</span>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import {
     Calculator,
     RefreshCw,
@@ -11,7 +12,9 @@ import {
     Trophy,
     Maximize,
     AlertCircle,
-    ArrowRight
+    ArrowRight,
+    RotateCcw,
+    HelpCircle
 } from 'lucide-react';
 import NumberInput from '../../components/NumberInput';
 import ModeSwitcher from '../../components/ui/ModeSwitcher';
@@ -19,25 +22,141 @@ import { useI18n } from '../../i18n';
 
 const MaterialCalculator: React.FC = () => {
     const { t } = useI18n();
-    const [mode, setMode] = useState<'sheet' | 'roll'>('sheet');
+
+    // Default values for reset
+    const defaults = {
+        mode: 'sheet' as 'sheet' | 'roll',
+        product: { w: 210, h: 148, qty: 1000 },
+        sheetMaterial: { w: 790, h: 1090, price: 2000 },
+        rollMaterial: {
+            widths: [500],
+            price: 100,
+            areaPrice: 200000,
+            priceMode: 'area' as 'area' | 'linear'
+        }
+    };
+
+    // Load from localStorage or use defaults
+    const loadState = <T,>(key: string, defaultValue: T): T => {
+        try {
+            const saved = localStorage.getItem(`matCalc_${key}`);
+            return saved ? JSON.parse(saved) : defaultValue;
+        } catch {
+            return defaultValue;
+        }
+    };
+
+    const [mode, setMode] = useState<'sheet' | 'roll'>(() => loadState('mode', defaults.mode));
     const [showPreview, setShowPreview] = useState(true);
 
     // Inputs
-    const [product, setProduct] = useState({ w: 210, h: 148, qty: 1000 });
-    const [sheetMaterial, setSheetMaterial] = useState({ w: 790, h: 1090, price: 2000 });
+    const [product, setProduct] = useState(() => loadState('product', defaults.product));
+    const [sheetMaterial, setSheetMaterial] = useState(() => loadState('sheetMaterial', defaults.sheetMaterial));
 
     // Roll Material: Hỗ trợ multi-width
-    const [rollMaterial, setRollMaterial] = useState({
-        widths: [500],
-        price: 100,
-        areaPrice: 200000,
-        priceMode: 'area' as 'area' | 'linear'
-    });
+    const [rollMaterial, setRollMaterial] = useState(() => loadState('rollMaterial', defaults.rollMaterial));
 
     // Results
     const [results, setResults] = useState<any[]>([]);
     const [selectedResultIndex, setSelectedResultIndex] = useState(0);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    // Save to localStorage when inputs change
+    useEffect(() => { localStorage.setItem('matCalc_mode', JSON.stringify(mode)); }, [mode]);
+    useEffect(() => { localStorage.setItem('matCalc_product', JSON.stringify(product)); }, [product]);
+    useEffect(() => { localStorage.setItem('matCalc_sheetMaterial', JSON.stringify(sheetMaterial)); }, [sheetMaterial]);
+    useEffect(() => { localStorage.setItem('matCalc_rollMaterial', JSON.stringify(rollMaterial)); }, [rollMaterial]);
+
+    // Reset function
+    const handleReset = () => {
+        setMode(defaults.mode);
+        setProduct(defaults.product);
+        setSheetMaterial(defaults.sheetMaterial);
+        setRollMaterial(defaults.rollMaterial);
+        setResults([]);
+        setSelectedResultIndex(0);
+    };
+
+    // Tour state - auto-start for first-time visitors
+    const [runTour, setRunTour] = useState(() => {
+        const hasSeenTour = localStorage.getItem('matCalc_tourSeen');
+        return !hasSeenTour;
+    });
+    const [tourStepIndex, setTourStepIndex] = useState(0);
+    const [countdown, setCountdown] = useState(5);
+    const TOUR_DELAY = 5;
+
+    const tourContents = [
+        t('tourMatWelcome'),
+        t('tourMatMode'),
+        t('tourMatProduct'),
+        mode === 'sheet' ? t('tourMatSheet') : t('tourMatRoll'),
+        t('tourMatResult'),
+        t('tourMatDiagram'),
+    ];
+
+    const tourSteps: Step[] = [
+        { target: 'body', content: '', placement: 'center' as const, disableBeacon: true },
+        { target: '#mode-section', content: '', placement: 'bottom' as const },
+        { target: '#product-section', content: '', placement: 'bottom' as const },
+        { target: '#material-section', content: '', placement: 'bottom' as const },
+        { target: '#result-section', content: '', placement: 'top' as const },
+        { target: '#diagram-section', content: '', placement: 'top' as const },
+    ].map((step, idx) => ({
+        ...step,
+        content: (
+            <div>
+                <div>{tourContents[idx]}</div>
+                <div className="mt-2 text-xs text-gray-400 flex items-center gap-1">
+                    <span className="inline-block w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></span>
+                    {countdown}s
+                </div>
+            </div>
+        ),
+    }));
+
+    // Countdown timer
+    useEffect(() => {
+        if (!runTour) return;
+
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    if (tourStepIndex < tourContents.length - 1) {
+                        setTourStepIndex(i => i + 1);
+                    } else {
+                        setRunTour(false);
+                        localStorage.setItem('matCalc_tourSeen', 'true');
+                    }
+                    return TOUR_DELAY;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [runTour, tourStepIndex, tourContents.length]);
+
+    const handleTourCallback = (data: CallBackProps) => {
+        const { status, action, index, type } = data;
+
+        if (type === 'step:after') {
+            if (action === 'next') {
+                setTourStepIndex(index + 1);
+                setCountdown(TOUR_DELAY);
+            } else if (action === 'prev') {
+                setTourStepIndex(index - 1);
+                setCountdown(TOUR_DELAY);
+            }
+        }
+
+        if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+            setRunTour(false);
+            setTourStepIndex(0);
+            setCountdown(TOUR_DELAY);
+            localStorage.setItem('matCalc_tourSeen', 'true');
+        }
+    };
 
     // Helper: Quản lý khổ cuộn
     const addRollWidth = () => setRollMaterial((prev) => ({ ...prev, widths: [...prev.widths, 0] }));
@@ -253,15 +372,51 @@ const MaterialCalculator: React.FC = () => {
                     </div>
                     {t('materialCalcTitle')}
                 </h1>
-                <div className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md">v2.1</div>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => { setTourStepIndex(0); setCountdown(TOUR_DELAY); setRunTour(true); }} className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition" title={t('startTour')}>
+                        <HelpCircle className="w-5 h-5" />
+                    </button>
+                    <button onClick={handleReset} className="p-2 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-600 transition" title={t('reset')}>
+                        <RotateCcw className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
 
+            {/* Joyride Tour */}
+            <Joyride
+                steps={tourSteps}
+                run={runTour}
+                stepIndex={tourStepIndex}
+                continuous
+                showProgress
+                showSkipButton
+                callback={handleTourCallback}
+                locale={{
+                    back: t('tourBack'),
+                    close: t('close'),
+                    last: t('tourFinish'),
+                    next: t('tourNext'),
+                    skip: t('tourSkip'),
+                }}
+                styles={{
+                    options: {
+                        primaryColor: '#2563eb',
+                        zIndex: 10000,
+                    },
+                    tooltip: {
+                        borderRadius: 12,
+                    },
+                }}
+            />
+
             <div className="max-w-md mx-auto px-4 pt-6">
-                <ModeSwitcher mode={mode} setMode={setMode} />
+                <div id="mode-section">
+                    <ModeSwitcher mode={mode} setMode={setMode} />
+                </div>
 
                 {/* 3. Product Input Card */}
                 <div className="space-y-6">
-                    <section className="space-y-3">
+                    <section id="product-section" className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
                             <Box className="w-3 h-3" /> {t('productMM')}
                         </h3>
@@ -284,7 +439,7 @@ const MaterialCalculator: React.FC = () => {
                     </section>
 
                     {/* 4. Material Input Card */}
-                    <section className="space-y-3">
+                    <section id="material-section" className="space-y-3">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
                             <Settings className="w-3 h-3" /> {mode === 'sheet' ? t('materialSheet') : t('materialRoll')}
                         </h3>
@@ -357,7 +512,7 @@ const MaterialCalculator: React.FC = () => {
 
                     {/* Footer Summary - now above preview */}
                     {activeResult && !activeResult.error && (
-                        <div className="sticky bottom-0 left-0 right-0 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-lg z-40">
+                        <div id="result-section" className="sticky bottom-0 left-0 right-0 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-lg z-40">
                             <div className="grid grid-cols-3 gap-4 items-center">
                                 <div>
                                     <div className="text-[10px] text-gray-400 font-semibold uppercase">{t('material')}</div>
@@ -386,7 +541,7 @@ const MaterialCalculator: React.FC = () => {
 
                     {/* 5. Compare Results & Preview */}
                     {activeResult && !activeResult.error && (
-                        <section className="pt-2">
+                        <section id="diagram-section" className="pt-2">
                             {/* Comparison List (Only for Roll Multi-Width) */}
                             {mode === 'roll' && results.length > 1 && (
                                 <div className="mb-4 space-y-2">

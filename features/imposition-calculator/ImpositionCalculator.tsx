@@ -125,26 +125,18 @@ const ImpositionCalculator: React.FC = () => {
         t('tourImpWelcome'),
         t('tourImpShape'),
         t('tourImpItemSize'),
-        t('tourImpPadding'),
-        t('tourImpPaperPreset'),
         t('tourImpPaperSize'),
         t('tourImpLayout'),
         t('tourImpPreview'),
-        t('tourImpOrder'),
-        t('tourImpResult'),
     ];
 
     const tourSteps: Step[] = [
         { target: 'body', content: '', placement: 'center' as const, disableBeacon: true },
         { target: '#shape-section', content: '', placement: 'bottom' as const },
         { target: '#item-size-section', content: '', placement: 'bottom' as const },
-        { target: '#padding-section', content: '', placement: 'bottom' as const },
-        { target: '#paper-preset-section', content: '', placement: 'bottom' as const },
         { target: '#paper-size-section', content: '', placement: 'bottom' as const },
-        { target: '#layout-section', content: '', placement: 'bottom' as const },
+        { target: '#layout-section', content: '', placement: 'top' as const },
         { target: '#preview-section', content: '', placement: 'top' as const },
-        { target: '#order-section', content: '', placement: 'top' as const },
-        { target: '#result-section', content: '', placement: 'top' as const },
     ].map((step, idx) => ({
         ...step,
         content: (
@@ -222,6 +214,8 @@ const ImpositionCalculator: React.FC = () => {
                     honeycombLayout: t('honeycombLayout'),
                     honeycombDesc: t('honeycombDesc'),
                     landscapeLayout: t('landscapeLayout'),
+                    mixedLayoutRight: t('mixedLayoutRight'),
+                    mixedLayoutBottom: t('mixedLayoutBottom'),
                     cols: t('cols'),
                     rows: t('rows'),
                     rotated: t('rotated')

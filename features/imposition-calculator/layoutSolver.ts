@@ -27,6 +27,8 @@ export interface LayoutConfig {
         honeycombLayout: string;
         honeycombDesc: string;
         landscapeLayout: string;
+        mixedLayoutRight: string;
+        mixedLayoutBottom: string;
         cols: string;
         rows: string;
         rotated: string;
@@ -47,6 +49,8 @@ export function calculateLayout(config: LayoutConfig): LayoutPlan[] {
         honeycombLayout: 'Xếp sole (tối ưu)',
         honeycombDesc: 'Xếp kiểu tổ ong, ~15% hiệu quả hơn',
         landscapeLayout: 'Tất cả ngang',
+        mixedLayoutRight: 'Dọc + Ngang (phải)',
+        mixedLayoutBottom: 'Dọc + Ngang (dưới)',
         cols: 'cột',
         rows: 'hàng',
         rotated: 'xoay'
@@ -180,6 +184,111 @@ export function calculateLayout(config: LayoutConfig): LayoutPlan[] {
                     qty: qtyL,
                     items: createGrid(colsL, rowsL, true, effectiveItemH, itemW),
                     description: `${colsL} ${t.cols} × ${rowsL} ${t.rows} (${t.rotated})`
+                });
+            }
+        }
+    }
+
+    // 4. Xếp hỗn hợp (Mixed clusters) - cho rect/oval
+    // Tính toán cụm dọc + cụm ngang để tối ưu diện tích
+    if (shape !== 'circle') {
+        // Cụm dọc (portrait cluster)
+        const pCols = Math.floor(printW / cellW);
+        const pRows = Math.floor(printH / cellH);
+        const pWidth = pCols * cellW;
+        const pHeight = pRows * cellH;
+        const pQty = pCols * pRows;
+
+        // Không gian còn lại bên phải
+        const remainW = printW - pWidth;
+        // Không gian còn lại bên dưới
+        const remainH = printH - pHeight;
+
+        // Rotated cell dimensions
+        const cellWR = effectiveItemH + padding;
+        const cellHR = itemW + padding;
+
+        // Try filling remaining right space with rotated items
+        if (remainW >= cellWR) {
+            const rCols = Math.floor(remainW / cellWR);
+            const rRows = Math.floor(printH / cellHR);
+            const rQty = rCols * rRows;
+
+            if (rQty > 0 && pQty + rQty > Math.max(colsP * rowsP, 0)) {
+                // Create mixed grid items
+                const items: LayoutItem[] = [];
+
+                // Portrait cluster
+                const grid1W = pCols * cellW;
+                const startX1 = offsetX + (pWidth - grid1W) / 2;
+                for (let r = 0; r < pRows; r++) {
+                    for (let c = 0; c < pCols; c++) {
+                        items.push({
+                            x: startX1 + c * cellW,
+                            y: offsetY + r * cellH,
+                            rot: false
+                        });
+                    }
+                }
+
+                // Rotated cluster (right side)
+                const startX2 = offsetX + pWidth;
+                for (let r = 0; r < rRows; r++) {
+                    for (let c = 0; c < rCols; c++) {
+                        items.push({
+                            x: startX2 + c * cellWR,
+                            y: offsetY + r * cellHR,
+                            rot: true
+                        });
+                    }
+                }
+
+                plans.push({
+                    name: t.mixedLayoutRight,
+                    qty: pQty + rQty,
+                    items,
+                    description: `${pCols}×${pRows} + ${rCols}×${rRows} (${t.rotated})`
+                });
+            }
+        }
+
+        // Try filling remaining bottom space with rotated items
+        if (remainH >= cellHR) {
+            const bCols = Math.floor(printW / cellWR);
+            const bRows = Math.floor(remainH / cellHR);
+            const bQty = bCols * bRows;
+
+            if (bQty > 0 && pQty + bQty > Math.max(colsP * rowsP, 0)) {
+                const items: LayoutItem[] = [];
+
+                // Portrait cluster
+                for (let r = 0; r < pRows; r++) {
+                    for (let c = 0; c < pCols; c++) {
+                        items.push({
+                            x: offsetX + c * cellW,
+                            y: offsetY + r * cellH,
+                            rot: false
+                        });
+                    }
+                }
+
+                // Rotated cluster (bottom)
+                const startY2 = offsetY + pHeight;
+                for (let r = 0; r < bRows; r++) {
+                    for (let c = 0; c < bCols; c++) {
+                        items.push({
+                            x: offsetX + c * cellWR,
+                            y: startY2 + r * cellHR,
+                            rot: true
+                        });
+                    }
+                }
+
+                plans.push({
+                    name: t.mixedLayoutBottom,
+                    qty: pQty + bQty,
+                    items,
+                    description: `${pCols}×${pRows} + ${bCols}×${bRows} (${t.rotated})`
                 });
             }
         }
